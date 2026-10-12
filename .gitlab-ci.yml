@@ -28,16 +28,6 @@ variables:
   # MTEAM_CI_ADDITIONAL_PACKAGES_YUM: cyrus-sasl-devel openldap-devel python3-devel
   # MTEAM_CI_ADDITIONAL_PACKAGES_ZYPPER: cyrus-sasl-devel openldap2-devel python3-devel
 
-# bullseye is end-of-life and not in target-distributions.txt: its python3.9
-# is too old for motley_cue (>= 3.10) and its security mirror rots (404s),
-# which broke the release pipeline. The base pipeline still defines the job
-# (gated .on-master), so it must be switched off explicitly -- deleting the
-# override below would restore the default job, not remove it.
-build-debian-bullseye:
-  extends:
-    - .build-debian-bullseye
-    - .never
-
 ##########################################################################
 # Integration (These might to to a central job def)
 trigger-integration-tests:
