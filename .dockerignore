@@ -1,0 +1,15 @@
+.git
+.github
+.gitlab-ci.yml
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+doc
+tests
+container/compose
+container/tests
+container/README.md

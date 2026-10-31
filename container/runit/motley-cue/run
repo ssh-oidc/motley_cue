@@ -1,0 +1,5 @@
+#!/bin/sh
+exec 2>&1
+exec gunicorn motley_cue.api:api \
+    -k uvicorn.workers.UvicornWorker \
+    --config /usr/lib/motley-cue/etc/gunicorn/gunicorn.conf.py

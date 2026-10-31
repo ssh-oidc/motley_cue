@@ -1,0 +1,43 @@
+services:
+  motley-cue:
+    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.8.9}
+    restart: unless-stopped
+    environment:
+      MOTLEY_CUE_CONFIG: /etc/motley_cue/motley_cue.conf
+      FEUDAL_ADAPTER_CONFIG: /etc/motley_cue/feudal_adapter.conf
+      FLAAT_CONFIG: /etc/motley_cue/flaat.conf
+      BIND: 0.0.0.0:8080
+    volumes:
+      - ../config/api/motley_cue.conf:/etc/motley_cue/motley_cue.conf:ro
+      - ../config/api/feudal_adapter.conf:/etc/motley_cue/feudal_adapter.conf:ro
+      - ../config/api/flaat.conf:/etc/motley_cue/flaat.conf:ro
+      - motley-cue-state:/var/lib/motley_cue
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  sshd:
+    image: sshoidc/motley-cue-sshd:${MOTLEY_CUE_TAG:-0.8.9}-pam
+    restart: unless-stopped
+    hostname: ssh
+    ports:
+      - "2222:22"
+    environment:
+      MOTLEY_CUE_VARIANT: pam
+    volumes:
+      - sshd-state:/state
+      - sshd-home:/home
+      # Mount a real nslcd.conf with bind credentials here. Without it the
+      # image starts with its anonymous-bind template.
+      # - ./nslcd.conf:/etc/nslcd.conf:ro
+    depends_on:
+      - motley-cue
+
+volumes:
+  motley-cue-state:
+  sshd-state:
+  sshd-home:

@@ -27,6 +27,9 @@ Follow the instructions there to support the repository on your system. Then ins
 
 This will ensure that all the dependencies are installed as well, and ``motley_cue`` is up and running as a systemd service.
 
+For container images, including all-in-one SSH appliances, see
+:ref:`docker`.
+
 
 Installation from pypi
 -----------------------
