@@ -26,7 +26,7 @@ because `shadow-utils` is used to manage those accounts.
 docker build -f container/Dockerfile --target api            -t sshoidc/motley-cue:0.8.9            .
 docker build -f container/Dockerfile --target allinone-pam   -t sshoidc/motley-cue-allinone:0.8.9-pam   .
 docker build -f container/Dockerfile --target allinone-oinit -t sshoidc/motley-cue-allinone:0.8.9-oinit .
-docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/motley-cue-sshd:0.8.9-pam       .
+docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/pam-sshd:0.8.9                .
 # For the external SSH host with oinit login, use sshoidc/oinit-sshd from the
 # oinit repository (see the table above).
 ```

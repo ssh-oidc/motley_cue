@@ -21,7 +21,7 @@ services:
       - no-new-privileges:true
 
   sshd:
-    image: sshoidc/motley-cue-sshd:${MOTLEY_CUE_TAG:-0.8.9}-pam
+    image: sshoidc/pam-sshd:${MOTLEY_CUE_TAG:-0.8.9}
     restart: unless-stopped
     hostname: ssh
     ports:

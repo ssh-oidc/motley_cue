@@ -1,0 +1,84 @@
+name: Publish container images
+
+# Builds and publishes all targets of container/Dockerfile to Docker Hub:
+#   api            -> sshoidc/motley-cue:<version>
+#   allinone-pam   -> sshoidc/motley-cue-allinone:<version>-pam
+#   allinone-oinit -> sshoidc/motley-cue-allinone:<version>-oinit
+#   sshd-pam       -> sshoidc/pam-sshd:<version>
+#
+# The external SSH host with oinit login is published by the oinit
+# repository (sshoidc/oinit-sshd).
+
+on:
+  push:
+    tags:
+      - v*.*.*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  images:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: api
+            image: sshoidc/motley-cue
+            suffix: ''
+          - target: allinone-pam
+            image: sshoidc/motley-cue-allinone
+            suffix: '-pam'
+          - target: allinone-oinit
+            image: sshoidc/motley-cue-allinone
+            suffix: '-oinit'
+          - target: sshd-pam
+            image: sshoidc/pam-sshd
+            suffix: ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=raw,value=latest${{ matrix.suffix }},enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+            type=semver,pattern={{version}}${{ matrix.suffix }}
+            type=semver,pattern={{major}}.{{minor}}${{ matrix.suffix }}
+            # workflow_dispatch builds (no tag) still get a usable tag:
+            type=sha,prefix=sha-,format=short
+
+      - name: Build and push ${{ matrix.target }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: container/Dockerfile
+          target: ${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

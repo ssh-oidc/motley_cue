@@ -41,7 +41,7 @@ Build the image that matches your deployment:
        -t sshoidc/motley-cue-allinone:0.8.9-oinit .
 
    docker build -f container/Dockerfile --target sshd-pam \
-       -t sshoidc/motley-cue-sshd:0.8.9-pam .
+       -t sshoidc/pam-sshd:0.8.9 .
 
    # For the external SSH host with oinit login, use sshoidc/oinit-sshd
    # from the oinit repository (see the table above).
