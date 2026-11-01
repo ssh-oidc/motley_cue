@@ -20,14 +20,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # External SSH host with oinit certificate login. This image is provided by
+  # the oinit repository (container/Dockerfile target "oinit-sshd"); see its
+  # container/README.md for provisioning: the host key lives at
+  # /state/ssh/host-key and the CA assets in /state/ssh/oinit.
   sshd:
-    image: sshoidc/motley-cue-sshd:${MOTLEY_CUE_TAG:-0.8.9}-oinit
+    image: sshoidc/oinit-sshd:${OINIT_TAG:-latest}
     restart: unless-stopped
     hostname: ssh
     ports:
       - "2222:22"
-    environment:
-      MOTLEY_CUE_VARIANT: oinit
     volumes:
       - sshd-state:/state
       - sshd-home:/home

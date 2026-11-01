@@ -13,8 +13,11 @@ Target                  Purpose                                        Runs as
 ``allinone-pam``        motley_cue + ``local_unix`` + sshd + PAM       root
 ``allinone-oinit``      motley_cue + ``local_unix`` + sshd + oinit     root
 ``sshd-pam``            SSH host for an external API, PAM login        root
-``sshd-oinit``          SSH host for an external API, oinit login      root
 ======================  =============================================  ===============
+
+The external SSH host with oinit certificate login is not built here anymore;
+it is provided by the oinit project (target ``oinit-sshd`` in the oinit
+repository's ``container/Dockerfile``, image ``sshoidc/oinit-sshd``).
 
 The all-in-one images are appliances: the container is the SSH host and
 ``local_unix`` creates accounts inside it. They run as root because
@@ -40,8 +43,8 @@ Build the image that matches your deployment:
    docker build -f container/Dockerfile --target sshd-pam \
        -t sshoidc/motley-cue-sshd:0.8.9-pam .
 
-   docker build -f container/Dockerfile --target sshd-oinit \
-       -t sshoidc/motley-cue-sshd:0.8.9-oinit .
+   # For the external SSH host with oinit login, use sshoidc/oinit-sshd
+   # from the oinit repository (see the table above).
 
 Build arguments:
 
@@ -122,8 +125,8 @@ authenticate with an OIDC token from the configured provider.
 oinit login
 ~~~~~~~~~~~
 
-``allinone-oinit`` and ``sshd-oinit`` use certificate login through
-``oinit-shell`` and ``oinit-switch``. The container generates
+``allinone-oinit`` uses certificate login through ``oinit-shell`` and
+``oinit-switch``. The container generates
 ``/state/ssh/ssh_host_ed25519_key`` on first start. It then exits with an error
 until the oinit files exist. To provision it:
 
@@ -152,9 +155,12 @@ The certificate principals must match the hostname clients use.
 External-API SSH hosts
 ----------------------
 
-``sshd-pam`` and ``sshd-oinit`` contain only sshd and the login mechanism. Users
-are resolved through NSS/LDAP (``nslcd``), and motley_cue runs separately with
-an LDAP backend.
+``sshd-pam`` contains only sshd with PAM token login. Users are resolved
+through NSS/LDAP (``nslcd``), and motley_cue runs separately with an LDAP
+backend. For oinit certificate login, use the ``sshoidc/oinit-sshd`` image
+from the oinit repository; its provisioning is documented in that
+repository's ``container/README.md`` (note: the host key lives at
+``/state/ssh/host-key`` there).
 
 Mount ``/state`` for host keys (and oinit files), ``/home`` for home
 directories, and ``/etc/nslcd.conf`` for the LDAP bind configuration. Without
@@ -190,7 +196,8 @@ Compose examples
    API and external SSH host with PAM login.
 
 ``sshd-oinit.yml``
-   API and external SSH host with oinit login.
+   API and external SSH host with oinit login; the SSH host image is
+   ``sshoidc/oinit-sshd`` (from the oinit repository).
 
 Replace the example configuration paths and credentials before deploying. The
 oinit examples mount ``./oinit`` at ``/state/ssh/oinit``; create that directory

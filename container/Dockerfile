@@ -10,8 +10,9 @@
 #   allinone-pam    appliance: local_unix + sshd + pam-ssh-oidc
 #   allinone-oinit  appliance: local_unix + sshd + oinit
 #   sshd-pam        SSH host for an external API (LDAP), PAM login
-#   sshd-oinit      SSH host for an external API (LDAP), oinit login
 #
+# The external SSH host with oinit login is provided by the oinit repository
+# (target "oinit-sshd", image sshoidc/oinit-sshd).
 # The appliance targets run as root because local_unix invokes shadow-utils.
 # The api target runs as the unprivileged motley_cue user.
 
@@ -316,21 +317,7 @@ COPY container/config/sshd/sshd-pam.conf /etc/ssh/sshd_config.d/10-motley-cue.co
 RUN sed -i '1i auth [success=done default=die] pam_oidc_token.so config=/etc/pam.d/pam-ssh-oidc-config.ini' \
         /etc/pam.d/sshd
 
-FROM sshd-base AS sshd-oinit
-
-ENV MOTLEY_CUE_VARIANT=oinit
-COPY --from=oinit-builder /out/oinit-shell /usr/bin/oinit-shell
-COPY --from=oinit-builder /out/oinit-switch /usr/bin/oinit-switch
-RUN chmod 0755 /usr/bin/oinit-shell /usr/bin/oinit-switch \
-    && setcap cap_chown=ep /usr/bin/oinit-switch
-
-COPY container/config/oinit/oinit-switch.conf /etc/oinit/oinit-switch.conf
-COPY container/config/oinit/sshd_config.append /etc/oinit/sshd_config.append
-RUN sed -i 's|^HostKey /etc/ssh/|#HostKey /etc/ssh/|' /etc/ssh/sshd_config \
-    && cat /etc/oinit/sshd_config.append >> /etc/ssh/sshd_config \
-    && printf '%s\n%s\n' \
-        'auth [success=ignore default=1] pam_succeed_if.so use_uid user = oinit' \
-        'auth sufficient                 pam_succeed_if.so uid ne 0' \
-        | cat - /etc/pam.d/su > /tmp/su \
-    && mv /tmp/su /etc/pam.d/su \
-    && chmod 0644 /etc/pam.d/su
+# The external SSH host with oinit certificate login is not built here
+# anymore: it is provided by the oinit repository (container/Dockerfile
+# target "oinit-sshd", image sshoidc/oinit-sshd). It provides the same
+# sshd + oinit-shell/switch + nslcd setup without the pam-ssh-oidc package.

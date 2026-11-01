@@ -9,7 +9,12 @@ a container. The build context is the repository root.
 | `allinone-pam` | motley_cue + `local_unix` + sshd + PAM token login | root |
 | `allinone-oinit` | motley_cue + `local_unix` + sshd + oinit login | root |
 | `sshd-pam` | SSH host for an external motley_cue API, PAM token login | root |
-| `sshd-oinit` | SSH host for an external motley_cue API, oinit login | root |
+
+The external SSH host with oinit certificate login is provided by the
+[oinit repository](https://github.com/ssh-oidc/oinit): its
+`container/Dockerfile` target `oinit-sshd` publishes `sshoidc/oinit-sshd` with
+the same sshd + `oinit-shell`/`oinit-switch` + nslcd setup (and without the
+unused `pam-ssh-oidc` package).
 
 The all-in-one images are appliances: the container is the SSH host and the
 `local_unix` backend creates real accounts inside it. They must run as root
@@ -22,7 +27,8 @@ docker build -f container/Dockerfile --target api            -t sshoidc/motley-c
 docker build -f container/Dockerfile --target allinone-pam   -t sshoidc/motley-cue-allinone:0.8.9-pam   .
 docker build -f container/Dockerfile --target allinone-oinit -t sshoidc/motley-cue-allinone:0.8.9-oinit .
 docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/motley-cue-sshd:0.8.9-pam       .
-docker build -f container/Dockerfile --target sshd-oinit     -t sshoidc/motley-cue-sshd:0.8.9-oinit     .
+# For the external SSH host with oinit login, use sshoidc/oinit-sshd from the
+# oinit repository (see the table above).
 ```
 
 Useful build arguments:
@@ -122,8 +128,8 @@ authenticate with an OIDC token issued by the configured provider.
 
 ### oinit login
 
-`allinone-oinit` and `sshd-oinit` use certificate login through `oinit-shell`
-and `oinit-switch`. Before the container can start, `oinit` must be provisioned:
+`allinone-oinit` uses certificate login through `oinit-shell` and
+`oinit-switch`. Before the container can start, `oinit` must be provisioned:
 
 1. Start the container once. It generates
    `/state/ssh/ssh_host_ed25519_key` and then exits with an error if the oinit
@@ -163,9 +169,11 @@ The certificate's principals must match the hostname users connect to.
 
 ## External-API SSH hosts
 
-`sshd-pam` and `sshd-oinit` provide only sshd and the login mechanism. They look
-up users through NSS/LDAP (`nslcd`) and expect an external motley_cue API with an
-LDAP backend.
+`sshd-pam` provides only sshd with PAM token login. It looks up users through
+NSS/LDAP (`nslcd`) and expects an external motley_cue API with an LDAP backend.
+For oinit certificate login, use the `sshoidc/oinit-sshd` image from the oinit
+repository (see its `container/README.md` for provisioning and the oinit file
+layout, which differs slightly: the host key lives at `/state/ssh/host-key`).
 
 Mount:
 
@@ -188,8 +196,8 @@ bindpw secret
 ```
 
 The PAM image uses the API configured in
-`/etc/pam.d/pam-ssh-oidc-config.ini`; the oinit image uses the certificates in
-`/state/ssh/oinit` as described above.
+`/etc/pam.d/pam-ssh-oidc-config.ini`; the oinit SSH host image uses the
+certificates in `/state/ssh/oinit` as described above.
 
 ## Health check
 
@@ -207,7 +215,7 @@ fails on connection errors or 5xx responses. Override the URL with
 | `allinone-pam.yml` | all-in-one PAM appliance |
 | `allinone-oinit.yml` | all-in-one oinit appliance |
 | `sshd-pam.yml` | API + external SSH host, PAM login |
-| `sshd-oinit.yml` | API + external SSH host, oinit login |
+| `sshd-oinit.yml` | API + external SSH host, oinit login (`sshoidc/oinit-sshd`) |
 
 The compose files mount the example configuration from `container/config`.
 Replace those paths and credentials with your own before deploying. The oinit
