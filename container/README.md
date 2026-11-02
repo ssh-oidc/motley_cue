@@ -20,6 +20,17 @@ The all-in-one images are appliances: the container is the SSH host and the
 `local_unix` backend creates real accounts inside it. They must run as root
 because `shadow-utils` is used to manage those accounts.
 
+## Publishing
+
+`.github/workflows/publish-images.yml` builds all four targets multi-arch
+(`linux/amd64`, `linux/arm64`) and pushes them to the `sshoidc` Docker Hub
+namespace:
+
+- pushes to `prerel` publish the moving tags `prerel`, `prerel-pam`,
+  `prerel-oinit` and `sha-<short>[-suffix]`, and deploy the all-in-one oinit
+  appliance to the CD host;
+- version tags publish the semver tags and `latest[-suffix]`.
+
 ## Building
 
 ```bash

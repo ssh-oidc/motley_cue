@@ -6,11 +6,20 @@ name: Publish container images
 #   allinone-oinit -> sshoidc/motley-cue-allinone:<version>-oinit
 #   sshd-pam       -> sshoidc/pam-sshd:<version>
 #
+# Pushes to prerel publish moving `prerel[-suffix]` tags; version tags publish
+# semver tags (plus `latest[-suffix]` for non-prerelease tags). On scratch
+# tags every image also gets a `sha-<short>[-suffix]` tag.
+#
+# A push to prerel also deploys the all-in-one oinit appliance to the CD host
+# (ssh-oidc-cicd.vm.fedcloud.eu).
+#
 # The external SSH host with oinit login is published by the oinit
 # repository (sshoidc/oinit-sshd).
 
 on:
   push:
+    branches:
+      - prerel
     tags:
       - v*.*.*
   workflow_dispatch:
@@ -54,8 +63,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker metadata
         id: meta
@@ -66,8 +75,9 @@ jobs:
             type=raw,value=latest${{ matrix.suffix }},enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
             type=semver,pattern={{version}}${{ matrix.suffix }}
             type=semver,pattern={{major}}.{{minor}}${{ matrix.suffix }}
+            type=raw,value=prerel${{ matrix.suffix }},enable=${{ github.ref == 'refs/heads/prerel' }}
             # workflow_dispatch builds (no tag) still get a usable tag:
-            type=sha,prefix=sha-,format=short
+            type=sha,prefix=sha-,format=short,suffix=${{ matrix.suffix }}
 
       - name: Build and push ${{ matrix.target }}
         uses: docker/build-push-action@v6
@@ -82,3 +92,47 @@ jobs:
           provenance: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy appliance to ssh-oidc-cicd
+    runs-on: ubuntu-latest
+    needs: images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/prerel'
+    environment: production
+    concurrency:
+      group: deploy-prerel
+      cancel-in-progress: false
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy motley-cue appliance
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "MC_TAG=prerel flock -w 600 /tmp/webssh-oidc-deploy.lock sh -s" <<'EOF'
+          set -eu
+          cd /opt/webssh-oidc
+          COMPOSE='docker compose -f docker/compose-oinit.yaml -f docker/compose.prod.yaml'
+          MC_TAG="$MC_TAG" $COMPOSE pull motley-cue
+          MC_TAG="$MC_TAG" $COMPOSE up -d --wait --no-deps motley-cue
+          $COMPOSE ps motley-cue
+          EOF
+      - name: Show remote logs on failure
+        if: failure()
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd /opt/webssh-oidc && docker compose -f docker/compose-oinit.yaml -f docker/compose.prod.yaml logs --tail=100 motley-cue" || true
