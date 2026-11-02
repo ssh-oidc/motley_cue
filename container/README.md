@@ -22,9 +22,11 @@ because `shadow-utils` is used to manage those accounts.
 
 ## Publishing
 
-`.github/workflows/publish-images.yml` builds all four targets multi-arch
-(`linux/amd64`, `linux/arm64`) and pushes them to the `sshoidc` Docker Hub
-namespace:
+`.github/workflows/publish-images.yml` builds `api` and `allinone-oinit` for
+`linux/amd64` and `linux/arm64`, and the PAM targets (`allinone-pam`,
+`sshd-pam`) for `linux/amd64` only, because `pam-ssh-oidc` is published only
+for amd64 in the KIT repository. The images are pushed to the `sshoidc` Docker
+Hub namespace:
 
 - pushes to `prerel` publish the moving tags `prerel`, `prerel-pam`,
   `prerel-oinit` and `sha-<short>[-suffix]`, and deploy the all-in-one oinit

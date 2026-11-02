@@ -10,6 +10,9 @@ name: Publish container images
 # semver tags (plus `latest[-suffix]` for non-prerelease tags). On scratch
 # tags every image also gets a `sha-<short>[-suffix]` tag.
 #
+# pam-ssh-oidc is only published for amd64 in the KIT repository, so the PAM
+# targets are built for linux/amd64 only; the others are multi-arch.
+#
 # A push to prerel also deploys the all-in-one oinit appliance to the CD host
 # (ssh-oidc-cicd.vm.fedcloud.eu).
 #
@@ -40,15 +43,19 @@ jobs:
           - target: api
             image: sshoidc/motley-cue
             suffix: ''
+            platforms: linux/amd64,linux/arm64
           - target: allinone-pam
             image: sshoidc/motley-cue-allinone
             suffix: '-pam'
+            platforms: linux/amd64
           - target: allinone-oinit
             image: sshoidc/motley-cue-allinone
             suffix: '-oinit'
+            platforms: linux/amd64,linux/arm64
           - target: sshd-pam
             image: sshoidc/pam-sshd
             suffix: ''
+            platforms: linux/amd64
 
     steps:
       - name: Checkout
@@ -85,7 +92,7 @@ jobs:
           context: .
           file: container/Dockerfile
           target: ${{ matrix.target }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platforms }}
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
