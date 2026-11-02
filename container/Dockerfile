@@ -146,8 +146,6 @@ RUN apt-get update \
     && curl -fsSL "${KIT_REPO_KEY_URL}" | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] ${KIT_REPO_URL} ./" \
         > /etc/apt/sources.list.d/kitrepo.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends pam-ssh-oidc \
     && rm -f /usr/sbin/policy-rc.d \
     && apt-get purge -y --auto-remove curl gpg \
     && rm -rf /var/lib/apt/lists/*
@@ -222,6 +220,14 @@ ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint-allinone.sh"]
 # Appliance with PAM token login
 # ---------------------------------------------------------------------------
 FROM allinone-base AS allinone-pam
+
+# pam-ssh-oidc exists only for amd64 in the KIT repository.
+RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
+    && chmod 0755 /usr/sbin/policy-rc.d \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends pam-ssh-oidc \
+    && rm -f /usr/sbin/policy-rc.d \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV MOTLEY_CUE_VARIANT=pam
 COPY container/config/pam/pam-ssh-oidc-config.ini /etc/pam.d/pam-ssh-oidc-config.ini
