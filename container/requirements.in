@@ -1,0 +1,21 @@
+# Runtime dependencies for the container images.
+#
+# The generated requirements.txt is a fully pinned, hash-checked lock file.
+# Regenerate it with:
+#
+#   pip-compile --generate-hashes --python-version 3.12 \
+#       --output-file container/requirements.txt container/requirements.in
+#
+# feudalAdapter is pinned here so its transitive dependencies are covered by
+# the lock. The Dockerfile installs the lock and then optionally replaces
+# feudalAdapter with a patched build (see FEUDAL_ADAPTER_SPEC).
+feudalAdapter==2.0.4
+flaat>=1.3.1
+fastapi==0.*
+uvicorn[standard]==0.*
+gunicorn==26.*
+sqlitedict==2.*
+cryptography==50.*
+markdown==3.*
+pydantic-settings==2.*
+pydantic==2.*

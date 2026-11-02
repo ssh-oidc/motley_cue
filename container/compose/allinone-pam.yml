@@ -1,0 +1,21 @@
+services:
+  motley-cue:
+    image: sshoidc/motley-cue-allinone:${MOTLEY_CUE_TAG:-0.8.9}-pam
+    restart: unless-stopped
+    hostname: motley-cue
+    ports:
+      - "2222:22"
+    environment:
+      MOTLEY_CUE_VARIANT: pam
+      MOTLEY_CUE_CONFIG: /etc/motley_cue/motley_cue.conf
+      FEUDAL_ADAPTER_CONFIG: /etc/motley_cue/feudal_adapter.conf
+      FLAAT_CONFIG: /etc/motley_cue/flaat.conf
+      BIND: 127.0.0.1:8080
+    volumes:
+      - ../config/allinone/motley_cue.conf:/etc/motley_cue/motley_cue.conf:ro
+      - ../config/allinone/feudal_adapter.conf:/etc/motley_cue/feudal_adapter.conf:ro
+      - ../config/allinone/flaat.conf:/etc/motley_cue/flaat.conf:ro
+      - motley-cue-state:/state
+
+volumes:
+  motley-cue-state:
