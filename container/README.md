@@ -29,9 +29,9 @@ for amd64 in the KIT repository. The images are pushed to the `sshoidc` Docker
 Hub namespace:
 
 - pushes to `prerel` publish the moving tags `prerel`, `prerel-pam`,
-  `prerel-oinit` and `sha-<short>[-suffix]`, and deploy the all-in-one oinit
-  appliance to the CD host;
-- version tags publish the semver tags and `latest[-suffix]`.
+  `prerel-oinit` and `sha-<short>[-suffix]`;
+- version tags publish the semver tags and `latest[-suffix]`, and deploy the
+  all-in-one oinit appliance to the CD host.
 
 ## Building
 

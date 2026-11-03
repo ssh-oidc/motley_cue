@@ -84,8 +84,9 @@ Release checklist
    proceed until it is — the next step cannot be undone cleanly.
 5. Create a release on GitHub from the release (the merge commit on
    ``master``): enter ``vX.Y.Z`` as a new tag — publishing the release
-   creates the tag, which triggers the PyPI publish. Add release notes
-   describing the changes since the previous release.
+   creates the tag, which triggers the PyPI publish, the container image
+   build and the deployment to the CD host. Add release notes describing the
+   changes since the previous release.
 6. Back on ``prerel``: ``bump2version patch`` (or the already-known next
    level) and push, so the following snapshots become candidates for the
    next release and publish cleanly (see "When to bump").
@@ -98,6 +99,17 @@ Release checklist
    PyPI publish, which cannot be undone cleanly — publishing a broken
    ``master`` publishes a broken release. Wait for builds *and*
    integration tests, then publish.
+
+Container deployment
+^^^^^^^^^^^^^^^^^^^^
+
+Publishing the ``vX.Y.Z`` tag also builds the container images and deploys
+the all-in-one oinit appliance to the CD host
+(``ssh-oidc-cicd.vm.fedcloud.eu``). The deploy job runs only after all image
+targets succeed and pins ``MC_TAG`` in the host's ``docker/.env``; pushes to
+``prerel`` only publish the moving ``prerel`` images. The host checkout is
+the webssh-oidc release tag, so release and deploy webssh-oidc first when a
+release changes the Compose manifest.
 
 Documentation versions
 ----------------------
