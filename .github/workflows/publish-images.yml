@@ -144,6 +144,12 @@ jobs:
             "VERSION='$VERSION' flock -w 600 /tmp/webssh-oidc-deploy.lock sh -s" <<'EOF'
           set -eu
           cd /opt/webssh-oidc
+          for f in docker/compose-oinit.yaml docker/compose.prod.yaml; do
+            test -f "$f" || {
+              echo "ERROR: /opt/webssh-oidc lacks $f; deploy a webssh-oidc release that includes it first." >&2
+              exit 1
+            }
+          done
           git describe --exact-match --tags HEAD >/dev/null || {
             echo "ERROR: /opt/webssh-oidc is not on a release tag." >&2
             echo "       Deploy the matching webssh-oidc release first." >&2
