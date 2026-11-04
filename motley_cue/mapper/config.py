@@ -424,6 +424,15 @@ class ConfigOPAuthZ(ConfigSection):
     supplying the values that section does not set. Every option below can
     therefore be configured once globally and overridden per OP.
 
+    GROUP CLAIM SOURCES
+    -------------------
+    ``group_claims`` lists the token claims whose values become local group
+    membership. feudalAdapter unions the configured claims: values that parse as
+    AARC-G002 entitlements are mapped to group names, all others are used
+    verbatim, and the result is filtered, masked and deduplicated. The default
+    names the claims used by the supported OPs. A per-OP list limits the
+    sources; an empty list disables claim-derived groups.
+
     ASSURANCE-BASED SHELL TIERS
     ---------------------------
     motley_cue evaluates each user's assurance claims against the
@@ -464,6 +473,13 @@ class ConfigOPAuthZ(ConfigSection):
     vo_claim: str = "eduperson_entitlement"
     vo_match: str = "one"
     audience: str = ""
+    # claims whose values are unioned into local group membership by feudal
+    group_claims: list = field(
+        default_factory=lambda: [
+            "entitlements",
+            "wlcg.groups",
+        ]
+    )
     # admin authorisation
     authorised_admins: list = field(default_factory=list)
     authorise_admins_for_all_ops: bool = False
@@ -612,6 +628,17 @@ class ConfigAuthorisation:
             Optional[OPAuthZ]: OPAuthZ object
         """
         return self.all_op_authz.get(canonical_url(user_infos.issuer), None)
+
+    def get_group_claims(self, user_infos) -> List[str]:
+        """Return the group claim sources configured for the OP in user_infos.
+
+        Unknown OPs fall back to the operator's [DEFAULT] configuration, the
+        same way assurance evaluation does, so the result is always a list.
+        """
+        op_authz = self.get_op_authz(user_infos)
+        if op_authz is None:
+            op_authz = self.default_op_authz
+        return list(op_authz.group_claims)
 
 
 @dataclass

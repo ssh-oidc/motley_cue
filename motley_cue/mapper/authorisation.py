@@ -2,7 +2,6 @@
 Authorisation module for motley_cue API.
 """
 
-from typing import Optional
 from enum import Enum
 import logging
 
@@ -254,34 +253,6 @@ class Authorisation(Flaat):
             request_requirements=_check_request,
         )
         return auth_flow.decorate_view_func(func)
-
-    def get_user_infos_from_access_token(  # pyright: ignore
-        self, access_token, issuer_hint=""
-    ) -> Optional[UserInfos]:
-        """Get a (flaat) UserInfos object from given OIDC Access Token."""
-        user_infos = super().get_user_infos_from_access_token(access_token, issuer_hint)
-        if (
-            user_infos is not None
-            and user_infos.user_info is not None
-            and user_infos.access_token_info is not None
-        ):
-            # HACK for wlcg OP: copy groups from AT body in 'wlcg.groups' claim
-            # to 'groups' claim in userinfo; also needed by feudalAdapter.
-            # NOTE: merged_userinfo() below already surfaces 'wlcg.groups' to
-            # feudalAdapter, but that is not enough: feudal's `entitlement`
-            # falls back to 'wlcg.groups' and then fails to parse the plain
-            # paths as AARC-G002 URNs, ending up with no groups at all. It only
-            # picks them up from the 'groups' claim, so this copy is still
-            # required.
-            wlcg_groups = user_infos.access_token_info.body.get("wlcg.groups", None)
-            if wlcg_groups is not None:
-                if "groups" in user_infos.user_info:
-                    user_infos.user_info["groups"] += [
-                        g for g in wlcg_groups if g not in user_infos.user_info["groups"]
-                    ]
-                else:
-                    user_infos.user_info["groups"] = wlcg_groups
-        return user_infos
 
     @staticmethod
     def merged_userinfo(user_infos: UserInfos) -> dict:
