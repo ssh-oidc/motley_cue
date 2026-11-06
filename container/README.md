@@ -223,6 +223,7 @@ fails on connection errors or 5xx responses. Override the URL with
 | `allinone-oinit.yml` | all-in-one oinit appliance |
 | `sshd-pam.yml` | API + external SSH host, PAM login |
 | `sshd-oinit.yml` | API + external SSH host, oinit login (`sshoidc/oinit-sshd`) |
+| `ldap-test.yml` | API + disposable OpenLDAP + optional PAM/oinit SSH host |
 
 The compose files mount the example configuration from `container/config`.
 Replace those paths and credentials with your own before deploying. The oinit
@@ -230,6 +231,22 @@ examples mount `./oinit` (relative to the compose file) at
 `/state/ssh/oinit`; create that directory with `user-ca.pub` and
 `host-key-cert.pub` before starting. `OINIT_TAG` selects the external
 `sshoidc/oinit-sshd` image tag (default `1.4.1`).
+
+`ldap-test.yml` is a self-contained test stack: OpenLDAP on port 1389, the API
+on port 8080, and an SSH host on port 2222. The SSH login mechanism is selected
+with a profile, so one file covers both variants:
+
+```bash
+docker compose -f container/compose/ldap-test.yml --profile pam up -d
+docker compose -f container/compose/ldap-test.yml --profile oinit up -d
+```
+
+It uses the test adapter configuration in `container/config/ldap-test` and seeds
+the directory from `container/compose/ldap/seed.ldif`. In read-only mode the
+user's `gecos` value must be `<urlencoded sub>@<urlencoded iss>`; the seed file
+contains a placeholder to replace. Add an `[authorisation.<name>]` section to
+`container/config/api/motley_cue.conf` for your OP before logging in. The LDAP
+data is kept in named volumes; reset it with `docker compose ... down -v`.
 
 ```bash
 docker compose -f container/compose/allinone-pam.yml up -d

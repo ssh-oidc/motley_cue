@@ -1,0 +1,41 @@
+# Bootstrap entries for the disposable LDAP server in ldap-test.yml.
+#
+# The API example uses the LDAP backend in read_only mode, so the user entry
+# must already contain the OIDC mapping in `gecos`. The value is:
+#
+#   <urlencoded sub>@<urlencoded iss>
+#
+# The placeholder below matches sub=testuser and
+# iss=https://op.example.org. Replace it with the mapping for your own OP,
+# for example:
+#
+#   gecos: c2370093...%40egi.eu@https%3A%2F%2Faai.egi.eu%2Foidc%2F
+
+dn: ou=users,dc=example,dc=org
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=example,dc=org
+objectClass: organizationalUnit
+ou: groups
+
+dn: cn=users,ou=groups,dc=example,dc=org
+objectClass: posixGroup
+cn: users
+gidNumber: 1000
+memberUid: testuser
+
+dn: uid=testuser,ou=users,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: testuser
+cn: Test User
+sn: User
+givenName: Test
+mail: testuser@example.org
+uidNumber: 1001
+gidNumber: 1000
+homeDirectory: /home/testuser
+loginShell: /bin/bash
+gecos: testuser@https%3A%2F%2Fop.example.org
+userPassword: testuser

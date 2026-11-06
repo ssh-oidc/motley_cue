@@ -1,0 +1,125 @@
+# Test stack: motley_cue API with the LDAP backend and a disposable OpenLDAP
+# server. The SSH login mechanism is orthogonal to the backend, so both SSH
+# hosts are defined here and selected with a Compose profile:
+#
+#   docker compose -f container/compose/ldap-test.yml --profile pam up -d
+#   docker compose -f container/compose/ldap-test.yml --profile oinit up -d
+#
+# Without a profile only the API and LDAP server start.
+#
+# The LDAP directory is stored in named volumes. To reset it and reload the
+# seed data:
+#
+#   docker compose -f container/compose/ldap-test.yml down -v
+#
+# The LDAP entries come from ./ldap/seed.ldif. In read_only mode the API maps a
+# federated user through the entry's `gecos` attribute; replace the placeholder
+# with <urlencoded sub>@<urlencoded iss> from your OP.
+#
+# The API configuration is container/config/api/motley_cue.conf; add an
+# [authorisation.<name>] section for your OP before logging in. The test adapter
+# configuration is container/config/ldap-test/feudal_adapter.conf.
+#
+# The oinit profile needs /state/ssh/oinit/user-ca.pub and
+# /state/ssh/oinit/host-key-cert.pub in the sshd-state volume. See
+# container/README.md for the provisioning steps.
+
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    command: ["--copy-service"]
+    restart: unless-stopped
+    environment:
+      LDAP_ORGANISATION: Example
+      LDAP_DOMAIN: example.org
+      LDAP_ADMIN_PASSWORD: adminpassword
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: readonly
+      LDAP_READONLY_USER_PASSWORD: readonlypassword
+      LDAP_SEED_INTERNAL_LDIF_PATH: /seed.ldif
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+      - ./ldap/seed.ldif:/seed.ldif:ro
+    ports:
+      - "1389:389"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          ldapsearch -x -H ldap://127.0.0.1:389 -b dc=example,dc=org
+          -D cn=readonly,dc=example,dc=org -w readonlypassword -s base
+          >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  motley-cue:
+    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.8.9}
+    restart: unless-stopped
+    depends_on:
+      ldap:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      MOTLEY_CUE_CONFIG: /etc/motley_cue/motley_cue.conf
+      FEUDAL_ADAPTER_CONFIG: /etc/motley_cue/feudal_adapter.conf
+      FLAAT_CONFIG: /etc/motley_cue/flaat.conf
+      BIND: 0.0.0.0:8080
+    volumes:
+      - ../config/api/motley_cue.conf:/etc/motley_cue/motley_cue.conf:ro
+      - ../config/ldap-test/feudal_adapter.conf:/etc/motley_cue/feudal_adapter.conf:ro
+      - ../config/api/flaat.conf:/etc/motley_cue/flaat.conf:ro
+      - motley-cue-state:/var/lib/motley_cue
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  sshd-pam:
+    profiles: ["pam"]
+    image: sshoidc/pam-sshd:${MOTLEY_CUE_TAG:-0.8.9}
+    restart: unless-stopped
+    hostname: ssh
+    depends_on:
+      ldap:
+        condition: service_healthy
+      motley-cue:
+        condition: service_healthy
+    ports:
+      - "2222:22"
+    environment:
+      MOTLEY_CUE_VARIANT: pam
+    volumes:
+      - sshd-state:/state
+      - sshd-home:/home
+      - ./ldap/nslcd.conf:/etc/nslcd.conf:ro
+
+  sshd-oinit:
+    profiles: ["oinit"]
+    image: sshoidc/oinit-sshd:${OINIT_TAG:-1.4.1}
+    restart: unless-stopped
+    hostname: ssh
+    depends_on:
+      ldap:
+        condition: service_healthy
+      motley-cue:
+        condition: service_healthy
+    ports:
+      - "2222:22"
+    volumes:
+      - sshd-state:/state
+      - sshd-home:/home
+      - ./ldap/nslcd.conf:/etc/nslcd.conf:ro
+      - ./oinit:/state/ssh/oinit:ro
+
+volumes:
+  ldap-data:
+  ldap-config:
+  motley-cue-state:
+  sshd-state:
+  sshd-home:

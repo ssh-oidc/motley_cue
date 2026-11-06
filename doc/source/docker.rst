@@ -191,14 +191,27 @@ Compose examples
    API and external SSH host with oinit login; the SSH host image is
    ``sshoidc/oinit-sshd`` (from the oinit repository).
 
+``ldap-test.yml``
+   API, a disposable OpenLDAP server, and an optional PAM or oinit SSH host.
+   Select the login mechanism with ``--profile pam`` or ``--profile oinit``.
+
 Replace the example configuration paths and credentials before deploying. The
 oinit examples mount ``./oinit`` at ``/state/ssh/oinit``; create that directory
 with ``user-ca.pub`` and ``host-key-cert.pub`` first. ``OINIT_TAG`` selects the
 external ``sshoidc/oinit-sshd`` image tag (default ``1.4.1``).
 
+``ldap-test.yml`` uses ``container/config/ldap-test/feudal_adapter.conf`` and
+seeds the test directory from ``container/compose/ldap/seed.ldif``. In
+``read_only`` mode the user entry's ``gecos`` attribute must contain
+``<urlencoded sub>@<urlencoded iss>``; replace the placeholder in the seed file
+with the mapping for your OP. Add an ``[authorisation.<name>]`` section to
+``container/config/api/motley_cue.conf`` before logging in.
+
 .. code-block:: bash
 
    docker compose -f container/compose/allinone-pam.yml up -d
+   docker compose -f container/compose/ldap-test.yml --profile pam up -d
+   docker compose -f container/compose/ldap-test.yml --profile oinit up -d
 
 Health check
 ------------
