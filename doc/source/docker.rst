@@ -4,7 +4,7 @@ Running motley_cue in containers
 ================================
 
 The repository contains a multi-target ``Dockerfile`` in ``container/``. The
-build context is the repository root. Five images are available:
+build context is the repository root. Four images are available:
 
 ======================  =============================================  ===============
 Target                  Purpose                                        Runs as
@@ -15,9 +15,9 @@ Target                  Purpose                                        Runs as
 ``sshd-pam``            SSH host for an external API, PAM login        root
 ======================  =============================================  ===============
 
-The external SSH host with oinit certificate login is not built here anymore;
-it is provided by the oinit project (target ``oinit-sshd`` in the oinit
-repository's ``container/Dockerfile``, image ``sshoidc/oinit-sshd``).
+The external SSH host with oinit certificate login is provided by the oinit
+project (target ``oinit-sshd`` in the oinit repository's ``container/Dockerfile``,
+image ``sshoidc/oinit-sshd``).
 
 The all-in-one images are appliances: the container is the SSH host and
 ``local_unix`` creates accounts inside it. They run as root because
@@ -43,8 +43,6 @@ Build the image that matches your deployment:
    docker build -f container/Dockerfile --target sshd-pam \
        -t sshoidc/pam-sshd:0.8.9 .
 
-   # For the external SSH host with oinit login, use sshoidc/oinit-sshd
-   # from the oinit repository (see the table above).
 
 Build arguments:
 
@@ -54,15 +52,9 @@ Build arguments:
 ``DEBIAN_RELEASE``
    Debian release for the runtime images (default ``bookworm``).
 
-``OINIT_REF``
-   oinit git tag or branch built into the oinit images (default ``v1.3.2``).
-
-``FEUDAL_ADAPTER_SPEC``
-   Additional pip requirement for the adapter (default
-   ``feudalAdapter==2.0.4``). Use this to install a patched build.
-
-``KIT_REPO_URL`` / ``KIT_REPO_KEY_URL``
-   Repository providing ``pam-ssh-oidc``.
+``OINIT_VERSION``
+   ``oinit-openssh`` version installed from the KIT repository (default
+   ``1.4.1``).
 
 API image
 ---------
@@ -201,7 +193,8 @@ Compose examples
 
 Replace the example configuration paths and credentials before deploying. The
 oinit examples mount ``./oinit`` at ``/state/ssh/oinit``; create that directory
-with ``user-ca.pub`` and ``host-key-cert.pub`` first.
+with ``user-ca.pub`` and ``host-key-cert.pub`` first. ``OINIT_TAG`` selects the
+external ``sshoidc/oinit-sshd`` image tag (default ``1.4.1``).
 
 .. code-block:: bash
 
@@ -220,10 +213,6 @@ Limitations
   replacing a container.
 - The API image supports a read-only root filesystem; the all-in-one images do
   not, because they write through symlinks into ``/state``.
-- ``pam-ssh-oidc`` is installed from the KIT Debian repository. Build with a
-  compatible package source if that repository is unavailable.
-- The images pin ``feudalAdapter==2.0.4``. Use ``FEUDAL_ADAPTER_SPEC`` to
-  install a patched build.
 
 See ``container/README.md`` for copy-paste ``docker run`` examples and the full
 environment variable reference.

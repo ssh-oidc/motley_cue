@@ -18,10 +18,7 @@
 
 ARG PYTHON_VERSION=3.12
 ARG DEBIAN_RELEASE=bookworm
-ARG OINIT_REF=v1.3.2
-ARG FEUDAL_ADAPTER_SPEC=feudalAdapter==2.0.4
-ARG KIT_REPO_URL=https://repo.data.kit.edu/debian/bookworm
-ARG KIT_REPO_KEY_URL=https://repo.data.kit.edu/repo-data-kit-edu-key.gpg
+ARG OINIT_VERSION=1.4.1
 
 # ---------------------------------------------------------------------------
 # Python dependencies
@@ -46,11 +43,6 @@ RUN python -m venv /opt/venv \
 
 COPY . /src/motley_cue
 RUN /opt/venv/bin/pip install --no-cache-dir --no-deps /src/motley_cue
-
-# Optional replacement for the pinned feudalAdapter, e.g. a patched build:
-#   --build-arg FEUDAL_ADAPTER_SPEC='feudalAdapter @ git+https://...@v2.0.4-f1'
-ARG FEUDAL_ADAPTER_SPEC
-RUN /opt/venv/bin/pip install --no-cache-dir --no-deps "${FEUDAL_ADAPTER_SPEC}"
 
 # ---------------------------------------------------------------------------
 # Runtime base shared by the Python images
@@ -108,16 +100,29 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint-api.sh"]
 
 # ---------------------------------------------------------------------------
-# oinit server binaries
+# oinit server binaries from the KIT Debian repository
 # ---------------------------------------------------------------------------
-FROM golang:1.24-alpine AS oinit-builder
+FROM debian:${DEBIAN_RELEASE}-slim AS oinit-package
 
-ARG OINIT_REF
-RUN apk add --no-cache git
-RUN git clone --depth 1 --branch "${OINIT_REF}" https://github.com/ssh-oidc/oinit.git /src/oinit
-WORKDIR /src/oinit
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/oinit-shell ./cmd/oinit-shell \
-    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/oinit-switch ./cmd/oinit-switch
+ARG DEBIAN_RELEASE
+ARG OINIT_VERSION
+
+# Download and extract only the binaries. Running the package's postinst would
+# create a host key and change the account/PAM state at image build time.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL "https://repo.data.kit.edu/repo-data-kit-edu-key.gpg" \
+        | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] https://repo.data.kit.edu/debian/bookworm ./" \
+        > /etc/apt/sources.list.d/kitrepo.list \
+    && apt-get update \
+    && mkdir -p /out \
+    && install -d -m 0777 /tmp/oinit-package \
+    && cd /tmp/oinit-package \
+    && apt-get download "oinit-openssh=${OINIT_VERSION}" \
+    && dpkg-deb -x oinit-openssh_*.deb /out \
+    && rm -rf /tmp/oinit-package
 
 # ---------------------------------------------------------------------------
 # Appliance base: the container is the SSH host
@@ -125,8 +130,6 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/oinit-shell ./cmd/
 FROM python-runtime AS allinone-base
 
 ARG DEBIAN_RELEASE
-ARG KIT_REPO_URL
-ARG KIT_REPO_KEY_URL
 
 RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
     && chmod 0755 /usr/sbin/policy-rc.d
@@ -143,8 +146,9 @@ RUN apt-get update \
         procps \
         runit \
     && install -d -m 0755 /etc/apt/keyrings \
-    && curl -fsSL "${KIT_REPO_KEY_URL}" | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] ${KIT_REPO_URL} ./" \
+    && curl -fsSL "https://repo.data.kit.edu/repo-data-kit-edu-key.gpg" \
+        | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] https://repo.data.kit.edu/debian/bookworm ./" \
         > /etc/apt/sources.list.d/kitrepo.list \
     && rm -f /usr/sbin/policy-rc.d \
     && apt-get purge -y --auto-remove curl gpg \
@@ -241,8 +245,8 @@ RUN sed -i '1i auth [success=done default=die] pam_oidc_token.so config=/etc/pam
 FROM allinone-base AS allinone-oinit
 
 ENV MOTLEY_CUE_VARIANT=oinit
-COPY --from=oinit-builder /out/oinit-shell /usr/bin/oinit-shell
-COPY --from=oinit-builder /out/oinit-switch /usr/bin/oinit-switch
+COPY --from=oinit-package /out/usr/bin/oinit-shell /usr/bin/oinit-shell
+COPY --from=oinit-package /out/usr/bin/oinit-switch /usr/bin/oinit-switch
 RUN chmod 0755 /usr/bin/oinit-shell /usr/bin/oinit-switch \
     && setcap cap_chown=ep /usr/bin/oinit-switch
 
@@ -263,8 +267,6 @@ RUN sed -i 's|^HostKey /etc/ssh/|#HostKey /etc/ssh/|' /etc/ssh/sshd_config \
 FROM debian:${DEBIAN_RELEASE}-slim AS sshd-base
 
 ARG DEBIAN_RELEASE
-ARG KIT_REPO_URL
-ARG KIT_REPO_KEY_URL
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -286,8 +288,9 @@ RUN apt-get update \
         runit \
         tini \
     && install -d -m 0755 /etc/apt/keyrings \
-    && curl -fsSL "${KIT_REPO_KEY_URL}" | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] ${KIT_REPO_URL} ./" \
+    && curl -fsSL "https://repo.data.kit.edu/repo-data-kit-edu-key.gpg" \
+        | gpg --dearmor -o /etc/apt/keyrings/kitrepo.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/kitrepo.gpg] https://repo.data.kit.edu/debian/bookworm ./" \
         > /etc/apt/sources.list.d/kitrepo.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends pam-ssh-oidc \
@@ -322,8 +325,3 @@ COPY container/config/sshd/pam-ssh-oidc-config.ini /etc/pam.d/pam-ssh-oidc-confi
 COPY container/config/sshd/sshd-pam.conf /etc/ssh/sshd_config.d/10-motley-cue.conf
 RUN sed -i '1i auth [success=done default=die] pam_oidc_token.so config=/etc/pam.d/pam-ssh-oidc-config.ini' \
         /etc/pam.d/sshd
-
-# The external SSH host with oinit certificate login is not built here
-# anymore: it is provided by the oinit repository (container/Dockerfile
-# target "oinit-sshd", image sshoidc/oinit-sshd). It provides the same
-# sshd + oinit-shell/switch + nslcd setup without the pam-ssh-oidc package.

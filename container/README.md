@@ -14,7 +14,7 @@ The external SSH host with oinit certificate login is provided by the
 [oinit repository](https://github.com/ssh-oidc/oinit): its
 `container/Dockerfile` target `oinit-sshd` publishes `sshoidc/oinit-sshd` with
 the same sshd + `oinit-shell`/`oinit-switch` + nslcd setup (and without the
-unused `pam-ssh-oidc` package).
+`pam-ssh-oidc` package).
 
 The all-in-one images are appliances: the container is the SSH host and the
 `local_unix` backend creates real accounts inside it. They must run as root
@@ -40,8 +40,6 @@ docker build -f container/Dockerfile --target api            -t sshoidc/motley-c
 docker build -f container/Dockerfile --target allinone-pam   -t sshoidc/motley-cue-allinone:0.8.9-pam   .
 docker build -f container/Dockerfile --target allinone-oinit -t sshoidc/motley-cue-allinone:0.8.9-oinit .
 docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/pam-sshd:0.8.9                .
-# For the external SSH host with oinit login, use sshoidc/oinit-sshd from the
-# oinit repository (see the table above).
 ```
 
 Useful build arguments:
@@ -50,14 +48,10 @@ Useful build arguments:
 | --- | --- | --- |
 | `PYTHON_VERSION` | `3.12` | Python base image version |
 | `DEBIAN_RELEASE` | `bookworm` | Debian release for the runtime images |
-| `OINIT_REF` | `v1.3.2` | oinit git tag/branch used to build the oinit binaries |
-| `FEUDAL_ADAPTER_SPEC` | `feudalAdapter==2.0.4` | pip requirement installed in addition to `container/requirements.txt` |
-| `KIT_REPO_URL` | KIT bookworm repository | Repository providing `pam-ssh-oidc` |
-| `KIT_REPO_KEY_URL` | KIT repository key | Key used for that repository |
+| `OINIT_VERSION` | `1.4.1` | oinit-openssh version installed from the KIT repository |
 
-The oinit binaries are built from `https://github.com/ssh-oidc/oinit`. To build
-from a local checkout instead, change the `oinit-builder` stage or pass a
-different `OINIT_REF`.
+The oinit binaries are installed from the KIT Debian repository
+(`oinit-openssh`). To use another version, pass a different `OINIT_VERSION`.
 
 ## API image
 
@@ -234,7 +228,8 @@ The compose files mount the example configuration from `container/config`.
 Replace those paths and credentials with your own before deploying. The oinit
 examples mount `./oinit` (relative to the compose file) at
 `/state/ssh/oinit`; create that directory with `user-ca.pub` and
-`host-key-cert.pub` before starting.
+`host-key-cert.pub` before starting. `OINIT_TAG` selects the external
+`sshoidc/oinit-sshd` image tag (default `1.4.1`).
 
 ```bash
 docker compose -f container/compose/allinone-pam.yml up -d
@@ -248,8 +243,3 @@ docker compose -f container/compose/allinone-pam.yml up -d
   at `/var/lib/motley_cue`.
 - The all-in-one images write to `/etc` through symlinks into `/state` and are
   not intended to run with a read-only root filesystem.
-- `pam-ssh-oidc` is installed from the KIT Debian repository. If that repository
-  is unavailable, build with a compatible package source and adjust the
-  `apt` steps.
-- The images pin `feudalAdapter==2.0.4`. Use `FEUDAL_ADAPTER_SPEC` to install a
-  patched build without editing `requirements.txt`.

@@ -25,7 +25,7 @@ services:
   # container/README.md for provisioning: the host key lives at
   # /state/ssh/host-key and the CA assets in /state/ssh/oinit.
   sshd:
-    image: sshoidc/oinit-sshd:${OINIT_TAG:-latest}
+    image: sshoidc/oinit-sshd:${OINIT_TAG:-1.4.1}
     restart: unless-stopped
     hostname: ssh
     ports:
