@@ -13,7 +13,7 @@ Therefore, motley-cue receives these tokens and requests information about the u
 - openid
 - profile
 - email
-- eduperson_entitlement
+- entitlements
 - eduperson_assurance
 
 Example of information released by Google when asked for the OpenID Scope:

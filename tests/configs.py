@@ -11,7 +11,7 @@ log_level = WARNING
 [DEFAULT]
 authorise_all = False
 authorised_vos = []
-vo_claim = eduperson_entitlement
+vo_claim = entitlements
 vo_match = one
 authorised_users = []
 authorised_admins = []

@@ -225,7 +225,7 @@ SWALLOWED_QUIETLY = """
 [mapper]
 [authorisation.egi]
 op_url = https://aai.egi.com/oidc
-vo_claim = eduperson_entitlement
+vo_claim = entitlements
 
   assurance_based_shell_tier_full = profile/mfa
   assurance_based_shell_tier_restricted = *
@@ -284,10 +284,15 @@ def test_ordinary_multiline_values_are_not_flagged(test_config, caplog):
 
 ### group claim sources for feudalAdapter
 
+DEFAULT_VO_CLAIM = "entitlements"
 DEFAULT_GROUP_CLAIMS = [
     "entitlements",
     "wlcg.groups",
 ]
+
+
+def test_vo_claim_default(test_config):
+    assert test_config.ConfigOPAuthZ().vo_claim == DEFAULT_VO_CLAIM
 
 
 def test_group_claims_default(test_config):

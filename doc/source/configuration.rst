@@ -82,11 +82,14 @@ Below, a configuration block for one OP with default values.
     authorised_vos = []
     
     ## the OIDC claim containing the VOs specified above
-    vo_claim = eduperson_entitlement
+    vo_claim = entitlements
     
     ## how many VOs need to be matched from the list, valid options: all, one, or an int
     vo_match = one
-    
+
+    ## token claims whose values become local group membership
+    group_claims = [entitlements, wlcg.groups]
+
     ## list of individual users authorised to use the service
     ## specified through OIDC 'sub', relative to the section's OP ('iss')
     authorised_users = []
@@ -114,6 +117,8 @@ Below, a configuration block for one OP with default values.
 - The OP URL must be specified
 - A VO must be specified as a string or an entitlement according to the AARC guideline `AARC-G002 <https://aarc-community.org/guidelines/aarc-g002>`_ (or `AARC-G069 <https://aarc-community.org/guidelines/aarc-g069>`_, once it is published)
 - An individual user must be specified by its unique identifier at the OP (the ``sub`` claim)
+
+Local group membership is derived from the claims listed in ``group_claims``. AARC-G002 entitlement values are mapped to group names, while all other values are used verbatim; the result is filtered by the ``[groups]`` policy and passed to the feudal adapter. The option inherits from ``[DEFAULT]`` and can be overridden per OP; a per-OP list replaces the default list rather than adding to it, and an empty list disables claim-derived groups.
 
 
 Furthermore, you can also configure an **audience** for the service in order to restrict access to tokens that have been released for this specific audience (i.e., they contain the configured audience in the ``aud`` claim). The audience can be configured individually per-OP.

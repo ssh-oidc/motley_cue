@@ -470,7 +470,7 @@ class ConfigOPAuthZ(ConfigSection):
     authorise_all: bool = False
     authorised_users: list = field(default_factory=list)
     authorised_vos: list = field(default_factory=list)
-    vo_claim: str = "eduperson_entitlement"
+    vo_claim: str = "entitlements"
     vo_match: str = "one"
     audience: str = ""
     # claims whose values are unioned into local group membership by feudal
