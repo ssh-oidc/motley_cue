@@ -9,7 +9,7 @@
 # feudalAdapter is pinned here so its transitive dependencies are covered by
 # the lock. The Dockerfile installs the lock and then optionally replaces
 # feudalAdapter with a patched build (see FEUDAL_ADAPTER_SPEC).
-feudalAdapter==2.0.4
+feudalAdapter==2.1.0
 flaat>=1.3.1
 fastapi==0.*
 uvicorn[standard]==0.*
