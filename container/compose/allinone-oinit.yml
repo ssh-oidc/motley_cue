@@ -1,6 +1,6 @@
 services:
   motley-cue:
-    image: sshoidc/motley-cue-allinone:${MOTLEY_CUE_TAG:-0.8.9}-oinit
+    image: sshoidc/motley-cue-allinone:${MOTLEY_CUE_TAG:-0.9.0}-oinit
     restart: unless-stopped
     hostname: motley-cue
     ports:

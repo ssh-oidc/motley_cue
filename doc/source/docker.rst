@@ -32,16 +32,16 @@ Build the image that matches your deployment:
 .. code-block:: bash
 
    docker build -f container/Dockerfile --target api \
-       -t sshoidc/motley-cue:0.8.9 .
+       -t sshoidc/motley-cue:0.9.0 .
 
    docker build -f container/Dockerfile --target allinone-pam \
-       -t sshoidc/motley-cue-allinone:0.8.9-pam .
+       -t sshoidc/motley-cue-allinone:0.9.0-pam .
 
    docker build -f container/Dockerfile --target allinone-oinit \
-       -t sshoidc/motley-cue-allinone:0.8.9-oinit .
+       -t sshoidc/motley-cue-allinone:0.9.0-oinit .
 
    docker build -f container/Dockerfile --target sshd-pam \
-       -t sshoidc/pam-sshd:0.8.9 .
+       -t sshoidc/pam-sshd:0.9.0 .
 
 
 Build arguments:

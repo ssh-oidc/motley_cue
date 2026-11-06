@@ -1,6 +1,6 @@
 services:
   motley-cue:
-    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.8.9}
+    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.9.0}
     restart: unless-stopped
     ports:
       - "8080:8080"

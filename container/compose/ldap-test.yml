@@ -55,7 +55,7 @@ services:
       retries: 20
 
   motley-cue:
-    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.8.9}
+    image: sshoidc/motley-cue:${MOTLEY_CUE_TAG:-0.9.0}
     restart: unless-stopped
     depends_on:
       ldap:
@@ -82,7 +82,7 @@ services:
 
   sshd-pam:
     profiles: ["pam"]
-    image: sshoidc/pam-sshd:${MOTLEY_CUE_TAG:-0.8.9}
+    image: sshoidc/pam-sshd:${MOTLEY_CUE_TAG:-0.9.0}
     restart: unless-stopped
     hostname: ssh
     depends_on:

@@ -36,10 +36,10 @@ Hub namespace:
 ## Building
 
 ```bash
-docker build -f container/Dockerfile --target api            -t sshoidc/motley-cue:0.8.9            .
-docker build -f container/Dockerfile --target allinone-pam   -t sshoidc/motley-cue-allinone:0.8.9-pam   .
-docker build -f container/Dockerfile --target allinone-oinit -t sshoidc/motley-cue-allinone:0.8.9-oinit .
-docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/pam-sshd:0.8.9                .
+docker build -f container/Dockerfile --target api            -t sshoidc/motley-cue:0.9.0            .
+docker build -f container/Dockerfile --target allinone-pam   -t sshoidc/motley-cue-allinone:0.9.0-pam   .
+docker build -f container/Dockerfile --target allinone-oinit -t sshoidc/motley-cue-allinone:0.9.0-oinit .
+docker build -f container/Dockerfile --target sshd-pam       -t sshoidc/pam-sshd:0.9.0                .
 ```
 
 Useful build arguments:
@@ -82,7 +82,7 @@ docker run -d --name motley-cue \
   -v "$PWD/container/config/api/feudal_adapter.conf:/etc/motley_cue/feudal_adapter.conf:ro" \
   -v "$PWD/container/config/api/flaat.conf:/etc/motley_cue/flaat.conf:ro" \
   -v motley-cue-state:/var/lib/motley_cue \
-  sshoidc/motley-cue:0.8.9
+  sshoidc/motley-cue:0.9.0
 ```
 
 The `feudalAdapter` LDAP backend connects when the API starts, so the LDAP
@@ -119,7 +119,7 @@ docker run -d --name motley-cue \
   -v "$PWD/container/config/allinone/feudal_adapter.conf:/etc/motley_cue/feudal_adapter.conf:ro" \
   -v "$PWD/container/config/allinone/flaat.conf:/etc/motley_cue/flaat.conf:ro" \
   -v motley-cue-state:/state \
-  sshoidc/motley-cue-allinone:0.8.9-pam
+  sshoidc/motley-cue-allinone:0.9.0-pam
 ```
 
 The API listens on `127.0.0.1:8080` inside the container and is intended to be
@@ -151,7 +151,7 @@ authenticate with an OIDC token issued by the configured provider.
      -v "$PWD/oinit:/oinit" \
      -v "$PWD/host-ca:/keys/host-ca:ro" \
      --entrypoint sh \
-     sshoidc/motley-cue-allinone:0.8.9-oinit -c '
+     sshoidc/motley-cue-allinone:0.9.0-oinit -c '
        ssh-keygen -s /keys/host-ca -I motley-cue-host -h -n localhost \
          /state/ssh/ssh_host_ed25519_key.pub
        cp /state/ssh/ssh_host_ed25519_key-cert.pub /oinit/host-key-cert.pub
