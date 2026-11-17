@@ -73,6 +73,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docker.html">Running motley_cue in containers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../running.html">Running</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../running.html#development">Development</a></li>
@@ -435,6 +436,19 @@
 <span class="c1"># Allows using ssh keys, when they are found in the deployment request</span>
 <span class="na">deploy_user_ssh_keys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">no</span>
 
+<span class="c1"># gid_min -- default: 1000</span>
+<span class="c1"># The lowest GID a federated user may be put into. Only groups that already</span>
+<span class="c1"># exist are checked; a group feudalAdapter creates gets its GID from</span>
+<span class="c1"># shadow-utils, which uses the same floor. Set to 0 to disable the check and</span>
+<span class="c1"># rely on the reserved-name list alone.</span>
+<span class="c1"># gid_min = 1000</span>
+
+<span class="c1"># reserved_groups -- default: empty</span>
+<span class="c1"># Additional group names to refuse, on top of the built-in list (root, sudo,</span>
+<span class="c1"># wheel, adm, docker, shadow, disk, ...). Use this for site-specific privileged</span>
+<span class="c1"># groups that live above gid_min.</span>
+<span class="c1"># reserved_groups = [operators, backup-admins]</span>
+
 <span class="c1"># punch4nfdi -- default: no</span>
 <span class="c1"># If set to yes, we will use the punch4nfdi-specific method to translate group names</span>
 <span class="c1"># punch4nfdi = no</span>
@@ -550,6 +564,10 @@
 <span class="c1">## GID range -- default 1000 -&gt; 60000</span>
 <span class="c1"># gid_min = 1000</span>
 <span class="c1"># gid_max = 60000</span>
+
+<span class="c1">## max_name_length -- default: 32</span>
+<span class="c1">## Upper bound for usernames and group names derived from OIDC claims.</span>
+<span class="c1"># max_name_length = 64</span>
 
 <span class="c1">## post_create_script -- default: None</span>
 <span class="c1">## A script to be executed after a user has been created</span>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Running motley_cue in containers &#8212; motley_cue</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=6c7590d8" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/css/fonts.css?v=09a796e2" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=8fd29722" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=7af948fa"></script>
+    <link rel="icon" href="_static/motley-cue.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+    <link rel="apple-touch-icon" href="_static/logos/motley-cue-notext.png" />
+  
+
+  
+  
+    <link rel="canonical" href="https://motley-cue.readthedocs.iodocker.html" />
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/logos/motley-cue.png" alt="Logo" />
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">A service for mapping OIDC identities to local identities</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ssh-oidc&repo=motley_cue&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Running motley_cue in containers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#building">Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-image">API image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#all-in-one-images">All-in-one images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pam-login">PAM login</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#oinit-login">oinit login</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#external-api-ssh-hosts">External-API SSH hosts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compose-examples">Compose examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#health-check">Health check</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ssh-integration.html">SSH Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">For developers</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="configuration.html" title="next chapter">Configuration</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="running-motley-cue-in-containers">
+<span id="docker"></span><h1>Running motley_cue in containers<a class="headerlink" href="#running-motley-cue-in-containers" title="Link to this heading">¶</a></h1>
+<p>The repository contains a multi-target <code class="docutils literal notranslate"><span class="pre">Dockerfile</span></code> in <code class="docutils literal notranslate"><span class="pre">container/</span></code>. The
+build context is the repository root. Four images are available:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Target</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Runs as</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">api</span></code></p></td>
+<td><p>API only, LDAP/bwidm backends</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">motley_cue</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">allinone-pam</span></code></p></td>
+<td><p>motley_cue + <code class="docutils literal notranslate"><span class="pre">local_unix</span></code> + sshd + PAM</p></td>
+<td><p>root</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">allinone-oinit</span></code></p></td>
+<td><p>motley_cue + <code class="docutils literal notranslate"><span class="pre">local_unix</span></code> + sshd + oinit</p></td>
+<td><p>root</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sshd-pam</span></code></p></td>
+<td><p>SSH host for an external API, PAM login</p></td>
+<td><p>root</p></td>
+</tr>
+</tbody>
+</table>
+<p>The external SSH host with oinit certificate login is provided by the oinit
+project (target <code class="docutils literal notranslate"><span class="pre">oinit-sshd</span></code> in the oinit repository’s <code class="docutils literal notranslate"><span class="pre">container/Dockerfile</span></code>,
+image <code class="docutils literal notranslate"><span class="pre">sshoidc/oinit-sshd</span></code>).</p>
+<p>The all-in-one images are appliances: the container is the SSH host and
+<code class="docutils literal notranslate"><span class="pre">local_unix</span></code> creates accounts inside it. They run as root because
+<code class="docutils literal notranslate"><span class="pre">shadow-utils</span></code> manages those accounts. The API image has no account database
+and runs as an unprivileged user.</p>
+<section id="building">
+<h2>Building<a class="headerlink" href="#building" title="Link to this heading">¶</a></h2>
+<p>Build the image that matches your deployment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>container/Dockerfile<span class="w"> </span>--target<span class="w"> </span>api<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-t<span class="w"> </span>sshoidc/motley-cue:0.9.0<span class="w"> </span>.
+
+docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>container/Dockerfile<span class="w"> </span>--target<span class="w"> </span>allinone-pam<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-t<span class="w"> </span>sshoidc/motley-cue-allinone:0.9.0-pam<span class="w"> </span>.
+
+docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>container/Dockerfile<span class="w"> </span>--target<span class="w"> </span>allinone-oinit<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-t<span class="w"> </span>sshoidc/motley-cue-allinone:0.9.0-oinit<span class="w"> </span>.
+
+docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>container/Dockerfile<span class="w"> </span>--target<span class="w"> </span>sshd-pam<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-t<span class="w"> </span>sshoidc/pam-sshd:0.9.0<span class="w"> </span>.
+</pre></div>
+</div>
+<p>Build arguments:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">PYTHON_VERSION</span></code></dt><dd><p>Python base image version (default <code class="docutils literal notranslate"><span class="pre">3.12</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">DEBIAN_RELEASE</span></code></dt><dd><p>Debian release for the runtime images (default <code class="docutils literal notranslate"><span class="pre">bookworm</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">OINIT_VERSION</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">oinit-openssh</span></code> version installed from the KIT repository (default
+<code class="docutils literal notranslate"><span class="pre">1.4.1</span></code>).</p>
+</dd>
+</dl>
+</section>
+<section id="api-image">
+<h2>API image<a class="headerlink" href="#api-image" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">api</span></code> image exposes port 8080 and runs gunicorn as the unprivileged
+<code class="docutils literal notranslate"><span class="pre">motley_cue</span></code> user. It refuses to start if <code class="docutils literal notranslate"><span class="pre">feudal_adapter.conf</span></code> selects
+<code class="docutils literal notranslate"><span class="pre">backend</span> <span class="pre">=</span> <span class="pre">local_unix</span></code>, because accounts created in the API container would
+not be visible to the SSH host.</p>
+<p>Configuration is read from <code class="docutils literal notranslate"><span class="pre">MOTLEY_CUE_CONFIG</span></code>,
+<code class="docutils literal notranslate"><span class="pre">FEUDAL_ADAPTER_CONFIG</span></code>, <code class="docutils literal notranslate"><span class="pre">FLAAT_CONFIG</span></code>, and <code class="docutils literal notranslate"><span class="pre">BIND</span></code> (default
+<code class="docutils literal notranslate"><span class="pre">0.0.0.0:8080</span></code>). <code class="docutils literal notranslate"><span class="pre">/var/lib/motley_cue</span></code> must be writable; it contains the
+<code class="docutils literal notranslate"><span class="pre">feudalAdapter</span></code> log file. Mount a volume there if the root filesystem is
+read-only.</p>
+<p>The LDAP backend connects when the API starts. The LDAP server must be
+reachable before the container is healthy.</p>
+</section>
+<section id="all-in-one-images">
+<h2>All-in-one images<a class="headerlink" href="#all-in-one-images" title="Link to this heading">¶</a></h2>
+<p>The all-in-one images run motley_cue, sshd, and the selected login mechanism in
+one container. All mutable state lives in <code class="docutils literal notranslate"><span class="pre">/state</span></code>:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/state/etc</span></code></dt><dd><p>Account database (<code class="docutils literal notranslate"><span class="pre">passwd</span></code>, <code class="docutils literal notranslate"><span class="pre">group</span></code>, <code class="docutils literal notranslate"><span class="pre">shadow</span></code>, <code class="docutils literal notranslate"><span class="pre">gshadow</span></code>,
+<code class="docutils literal notranslate"><span class="pre">subuid</span></code>, <code class="docutils literal notranslate"><span class="pre">subgid</span></code>, <code class="docutils literal notranslate"><span class="pre">login.defs</span></code>, <code class="docutils literal notranslate"><span class="pre">shells</span></code>, <code class="docutils literal notranslate"><span class="pre">default/useradd</span></code>,
+<code class="docutils literal notranslate"><span class="pre">skel</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">/state/home</span></code></dt><dd><p>Home directories. <code class="docutils literal notranslate"><span class="pre">/home</span></code> is a symlink to this directory.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">/state/ssh</span></code></dt><dd><p>SSH host keys.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">/state/motley_cue</span></code></dt><dd><p>motley_cue runtime data.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">/state/ssh/oinit</span></code></dt><dd><p>oinit user CA and host certificate (oinit variant only).</p>
+</dd>
+</dl>
+<p>Mount <code class="docutils literal notranslate"><span class="pre">/state</span></code> as a volume. It is seeded from image templates on first start
+and reused afterwards. The image installs wrappers for <code class="docutils literal notranslate"><span class="pre">useradd</span></code>,
+<code class="docutils literal notranslate"><span class="pre">usermod</span></code>, <code class="docutils literal notranslate"><span class="pre">userdel</span></code>, <code class="docutils literal notranslate"><span class="pre">groupadd</span></code>, <code class="docutils literal notranslate"><span class="pre">groupmod</span></code>, and <code class="docutils literal notranslate"><span class="pre">groupdel</span></code> that
+pass <code class="docutils literal notranslate"><span class="pre">-P</span> <span class="pre">/state</span></code> to the real tools (and <code class="docutils literal notranslate"><span class="pre">-R</span> <span class="pre">/state</span></code> for <code class="docutils literal notranslate"><span class="pre">chage</span></code>), so
+account changes go to the persistent volume.</p>
+<p>The default configuration uses <code class="docutils literal notranslate"><span class="pre">backend</span> <span class="pre">=</span> <span class="pre">local_unix</span></code> and
+<code class="docutils literal notranslate"><span class="pre">home_base</span> <span class="pre">=</span> <span class="pre">/home</span></code>. The API listens on <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8080</span></code> inside the
+container; do not publish it unless you intend to expose it.</p>
+<section id="pam-login">
+<h3>PAM login<a class="headerlink" href="#pam-login" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">allinone-pam</span></code> configures sshd for <code class="docutils literal notranslate"><span class="pre">keyboard-interactive</span></code> authentication
+through <code class="docutils literal notranslate"><span class="pre">pam-ssh-oidc</span></code>. Adjust
+<code class="docutils literal notranslate"><span class="pre">/etc/pam.d/pam-ssh-oidc-config.ini</span></code> to point at the motley_cue API. Users
+authenticate with an OIDC token from the configured provider.</p>
+</section>
+<section id="oinit-login">
+<h3>oinit login<a class="headerlink" href="#oinit-login" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">allinone-oinit</span></code> uses certificate login through <code class="docutils literal notranslate"><span class="pre">oinit-shell</span></code> and
+<code class="docutils literal notranslate"><span class="pre">oinit-switch</span></code>. The container generates
+<code class="docutils literal notranslate"><span class="pre">/state/ssh/ssh_host_ed25519_key</span></code> on first start. It then exits with an error
+until the oinit files exist. To provision it:</p>
+<ol class="arabic">
+<li><p>Run the container once to generate the host key.</p></li>
+<li><p>Sign the host public key with the host CA. If <code class="docutils literal notranslate"><span class="pre">/state</span></code> is a named volume,
+run this from a helper container with the volume mounted at <code class="docutils literal notranslate"><span class="pre">/state</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh-keygen<span class="w"> </span>-s<span class="w"> </span>host-ca<span class="w"> </span>-I<span class="w"> </span>motley-cue-host<span class="w"> </span>-h<span class="w"> </span>-n<span class="w"> </span>localhost<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>/state/ssh/ssh_host_ed25519_key.pub
+</pre></div>
+</div>
+</li>
+<li><p>Copy the certificate and the user CA public key:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span>/state/ssh/ssh_host_ed25519_key-cert.pub<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>/state/ssh/oinit/host-key-cert.pub
+cp<span class="w"> </span>user-ca.pub<span class="w"> </span>/state/ssh/oinit/user-ca.pub
+chmod<span class="w"> </span><span class="m">0644</span><span class="w"> </span>/state/ssh/oinit/*
+</pre></div>
+</div>
+</li>
+<li><p>Start the container again.</p></li>
+</ol>
+<p>The certificate principals must match the hostname clients use.</p>
+</section>
+</section>
+<section id="external-api-ssh-hosts">
+<h2>External-API SSH hosts<a class="headerlink" href="#external-api-ssh-hosts" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">sshd-pam</span></code> contains only sshd with PAM token login. Users are resolved
+through NSS/LDAP (<code class="docutils literal notranslate"><span class="pre">nslcd</span></code>), and motley_cue runs separately with an LDAP
+backend. For oinit certificate login, use the <code class="docutils literal notranslate"><span class="pre">sshoidc/oinit-sshd</span></code> image
+from the oinit repository; its provisioning is documented in that
+repository’s <code class="docutils literal notranslate"><span class="pre">container/README.md</span></code> (note: the host key lives at
+<code class="docutils literal notranslate"><span class="pre">/state/ssh/host-key</span></code> there).</p>
+<p>Mount <code class="docutils literal notranslate"><span class="pre">/state</span></code> for host keys (and oinit files), <code class="docutils literal notranslate"><span class="pre">/home</span></code> for home
+directories, and <code class="docutils literal notranslate"><span class="pre">/etc/nslcd.conf</span></code> for the LDAP bind configuration. Without
+<code class="docutils literal notranslate"><span class="pre">/etc/nslcd.conf</span></code> the image starts with an anonymous-bind template. A typical
+configuration is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>uid nslcd
+gid nslcd
+uri ldap://ldap.example.org
+base dc=example,dc=org
+binddn cn=motley-cue,ou=services,dc=example,dc=org
+bindpw secret
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">pam_mkhomedir</span></code> creates home directories on first login.</p>
+</section>
+<section id="compose-examples">
+<h2>Compose examples<a class="headerlink" href="#compose-examples" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">container/compose</span></code> contains one example per deployment shape:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">api.yml</span></code></dt><dd><p>API only.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">allinone-pam.yml</span></code></dt><dd><p>All-in-one PAM appliance.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">allinone-oinit.yml</span></code></dt><dd><p>All-in-one oinit appliance.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sshd-pam.yml</span></code></dt><dd><p>API and external SSH host with PAM login.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sshd-oinit.yml</span></code></dt><dd><p>API and external SSH host with oinit login; the SSH host image is
+<code class="docutils literal notranslate"><span class="pre">sshoidc/oinit-sshd</span></code> (from the oinit repository).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ldap-test.yml</span></code></dt><dd><p>API, a disposable OpenLDAP server, and an optional PAM or oinit SSH host.
+Select the login mechanism with <code class="docutils literal notranslate"><span class="pre">--profile</span> <span class="pre">pam</span></code> or <code class="docutils literal notranslate"><span class="pre">--profile</span> <span class="pre">oinit</span></code>.</p>
+</dd>
+</dl>
+<p>Replace the example configuration paths and credentials before deploying. The
+oinit examples mount <code class="docutils literal notranslate"><span class="pre">./oinit</span></code> at <code class="docutils literal notranslate"><span class="pre">/state/ssh/oinit</span></code>; create that directory
+with <code class="docutils literal notranslate"><span class="pre">user-ca.pub</span></code> and <code class="docutils literal notranslate"><span class="pre">host-key-cert.pub</span></code> first. <code class="docutils literal notranslate"><span class="pre">OINIT_TAG</span></code> selects the
+external <code class="docutils literal notranslate"><span class="pre">sshoidc/oinit-sshd</span></code> image tag (default <code class="docutils literal notranslate"><span class="pre">1.4.1</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">ldap-test.yml</span></code> uses <code class="docutils literal notranslate"><span class="pre">container/config/ldap-test/feudal_adapter.conf</span></code> and
+seeds the test directory from <code class="docutils literal notranslate"><span class="pre">container/compose/ldap/seed.ldif</span></code>. In
+<code class="docutils literal notranslate"><span class="pre">read_only</span></code> mode the user entry’s <code class="docutils literal notranslate"><span class="pre">gecos</span></code> attribute must contain
+<code class="docutils literal notranslate"><span class="pre">&lt;urlencoded</span> <span class="pre">sub&gt;&#64;&lt;urlencoded</span> <span class="pre">iss&gt;</span></code>; replace the placeholder in the seed file
+with the mapping for your OP. Add an <code class="docutils literal notranslate"><span class="pre">[authorisation.&lt;name&gt;]</span></code> section to
+<code class="docutils literal notranslate"><span class="pre">container/config/api/motley_cue.conf</span></code> before logging in.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>container/compose/allinone-pam.yml<span class="w"> </span>up<span class="w"> </span>-d
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>container/compose/ldap-test.yml<span class="w"> </span>--profile<span class="w"> </span>pam<span class="w"> </span>up<span class="w"> </span>-d
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>container/compose/ldap-test.yml<span class="w"> </span>--profile<span class="w"> </span>oinit<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+</section>
+<section id="health-check">
+<h2>Health check<a class="headerlink" href="#health-check" title="Link to this heading">¶</a></h2>
+<p>The API image checks <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8080/</span></code> and fails on connection errors
+or 5xx responses. Set <code class="docutils literal notranslate"><span class="pre">HEALTHCHECK_URL</span></code> to check a different URL.</p>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Host keys and the account database are state. Back up <code class="docutils literal notranslate"><span class="pre">/state</span></code> before
+replacing a container.</p></li>
+<li><p>The API image supports a read-only root filesystem; the all-in-one images do
+not, because they write through symlinks into <code class="docutils literal notranslate"><span class="pre">/state</span></code>.</p></li>
+</ul>
+<p>See <code class="docutils literal notranslate"><span class="pre">container/README.md</span></code> for copy-paste <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span></code> examples and the full
+environment variable reference.</p>
+</section>
+</section>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="installation.html" title="Previous document">Installation</a>
+        </li>
+        <li>
+          <a href="configuration.html" title="Next document">Configuration</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2021-present, Diana Gudu.
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

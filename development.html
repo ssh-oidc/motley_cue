@@ -73,6 +73,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docker.html">Running motley_cue in containers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -82,6 +83,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#releasing">Releasing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#when-to-bump">When to bump</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#release-checklist">Release checklist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#container-deployment">Container deployment</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#documentation-versions">Documentation versions</a></li>
@@ -146,27 +148,38 @@ is merged.</p></li>
 </ul>
 <section id="when-to-bump">
 <h3>When to bump<a class="headerlink" href="#when-to-bump" title="Link to this heading">¶</a></h3>
-<p>Bump once per release, on <code class="docutils literal notranslate"><span class="pre">prerel</span></code>, after all feature work is merged and
-CI is green — as the final commit before, or the first commit inside, the
-release pull request:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bump2version</span> <span class="p">[</span><span class="n">patch</span><span class="o">|</span><span class="n">minor</span><span class="o">|</span><span class="n">major</span><span class="p">]</span>
+<p>The version on <code class="docutils literal notranslate"><span class="pre">prerel</span></code> always names the release under development:
+<code class="docutils literal notranslate"><span class="pre">0.8.9~rcN</span></code> snapshots are release candidates for <code class="docutils literal notranslate"><span class="pre">0.8.9</span></code>. The bump
+therefore happens once per release, on <code class="docutils literal notranslate"><span class="pre">prerel</span></code>, <strong>right after</strong> the
+previous release is tagged:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">switch</span> <span class="n">prerel</span>
+<span class="n">bump2version</span> <span class="n">patch</span>
 </pre></div>
 </div>
-<p>Use <code class="docutils literal notranslate"><span class="pre">patch</span></code> for bug fixes, dependency updates and CI/test-only changes,
-<code class="docutils literal notranslate"><span class="pre">minor</span></code> for new backwards-compatible functionality, and <code class="docutils literal notranslate"><span class="pre">major</span></code> for
-breaking changes. Deciding at release time means the bump level is chosen
-with full knowledge of the release contents. Do not bump when starting a
-feature branch (every branch would edit the same single-line files and
-conflict on merge, and prerel builds would carry the new version before
-the release scope is known) and not after every merge to <code class="docutils literal notranslate"><span class="pre">prerel</span></code>
-(which makes the version creep without releases).</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">patch</span></code> unless the scope of the next release is already known to
+require <code class="docutils literal notranslate"><span class="pre">minor</span></code> (new backwards-compatible functionality) or <code class="docutils literal notranslate"><span class="pre">major</span></code>
+(breaking changes) — then bump straight to that level. If the scope only
+becomes clear mid-cycle, bump again at release time, as the final commit
+before (or the first commit inside) the release pull request;
+<code class="docutils literal notranslate"><span class="pre">bump2version</span></code> moves cleanly between levels (<code class="docutils literal notranslate"><span class="pre">0.8.9</span> <span class="pre">→</span> <span class="pre">0.9.0</span></code>).</p>
+<p>Why after, not before: prerel snapshots are published to the <code class="docutils literal notranslate"><span class="pre">prerel</span></code>
+package repo as <code class="docutils literal notranslate"><span class="pre">X.Y.Z~rcN</span></code>, where <code class="docutils literal notranslate"><span class="pre">N</span></code> counts the commits ahead of
+<code class="docutils literal notranslate"><span class="pre">master</span></code> and resets to 1 on every release merge. If <code class="docutils literal notranslate"><span class="pre">prerel</span></code> kept the
+just-released version, the next snapshots would reuse filenames already
+published from earlier commits (<code class="docutils literal notranslate"><span class="pre">0.8.8~rc1</span></code> twice), and the repo rejects
+them (“already published from a different commit”). Bumping right after
+the tag keeps every snapshot filename unique and sorting after the
+release it follows.</p>
+<p>Do not bump when starting a feature branch: every branch would edit the
+same single-line files and conflict on merge. The single post-release
+bump above is the only routine exception.</p>
 <p>Rules:</p>
 <ul class="simple">
 <li><p>Never hand-edit the version strings. Hand edits desynchronise
 <code class="docutils literal notranslate"><span class="pre">.bumpversion.cfg</span></code> and the tool stops working.</p></li>
 <li><p>The tool never tags (<code class="docutils literal notranslate"><span class="pre">tag</span> <span class="pre">=</span> <span class="pre">False</span></code>). <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> tags are created
 manually on <code class="docutils literal notranslate"><span class="pre">master</span></code> when a release is published (see below).</p></li>
-<li><p>Prerelease numbering (<code class="docutils literal notranslate"><span class="pre">0.8.6~prN</span></code>) is fully automatic: GitLab CI
+<li><p>Prerelease numbering (<code class="docutils literal notranslate"><span class="pre">X.Y.Z~rcN</span></code>) is fully automatic: GitLab CI
 rewrites the version at build time via
 <code class="docutils literal notranslate"><span class="pre">.gitlab-ci-scripts/set-prerelease-version.sh</span></code>. Nothing to do manually.</p></li>
 </ul>
@@ -174,25 +187,45 @@ rewrites the version at build time via
 <section id="release-checklist">
 <h3>Release checklist<a class="headerlink" href="#release-checklist" title="Link to this heading">¶</a></h3>
 <ol class="arabic simple">
-<li><p>All feature pull requests merged to <code class="docutils literal notranslate"><span class="pre">prerel</span></code>, CI green.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">bump2version</span> <span class="pre">[patch|minor|major]</span></code> on <code class="docutils literal notranslate"><span class="pre">prerel</span></code> (commits
-automatically).</p></li>
+<li><p>All feature pull requests merged to <code class="docutils literal notranslate"><span class="pre">prerel</span></code>; the <code class="docutils literal notranslate"><span class="pre">prerel</span></code>
+pipeline is green, <strong>including the integration tests</strong>. Do not advance to the next step
+on red integration.</p></li>
+<li><p>If the release level differs from the version on <code class="docutils literal notranslate"><span class="pre">prerel</span></code> (e.g. the
+scope grew from patch to minor), <code class="docutils literal notranslate"><span class="pre">bump2version</span> <span class="pre">[minor|major]</span></code> on
+<code class="docutils literal notranslate"><span class="pre">prerel</span></code>.</p></li>
 <li><p>Open pull request <code class="docutils literal notranslate"><span class="pre">prerel</span></code> → <code class="docutils literal notranslate"><span class="pre">master</span></code> titled <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code>, review,
 merge.</p></li>
-<li><p>Create tag <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> on <code class="docutils literal notranslate"><span class="pre">master</span></code> and push it — but only once the
-GitLab pipeline for the merge (step 3) is fully green, <strong>including the
-integration tests</strong> (see below).</p></li>
-<li><p>Create a release on GitHub from the tag, with release notes describing
-the changes since the previous release.</p></li>
+<li><p>Check that the GitLab pipeline for the merge (step 3) is fully green
+on <code class="docutils literal notranslate"><span class="pre">master</span></code>, <strong>including the integration tests</strong>. Do not
+proceed until it is — the next step cannot be undone cleanly.</p></li>
+<li><p>Create a release on GitHub from the release (the merge commit on
+<code class="docutils literal notranslate"><span class="pre">master</span></code>): enter <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> as a new tag — publishing the release
+creates the tag, which triggers the PyPI publish, the container image
+build and the deployment to the CD host. Add release notes describing the
+changes since the previous release.</p></li>
+<li><p>Back on <code class="docutils literal notranslate"><span class="pre">prerel</span></code>: <code class="docutils literal notranslate"><span class="pre">bump2version</span> <span class="pre">patch</span></code> (or the already-known next
+level) and push, so the following snapshots become candidates for the
+next release and publish cleanly (see “When to bump”).</p></li>
 </ol>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>Never tag before the GitLab integration tests pass. Merging to
-<code class="docutils literal notranslate"><span class="pre">master</span></code> starts the GitLab pipeline automatically via the mirror, but
-pushing the tag triggers the PyPI publish, which cannot be undone
-cleanly — tagging a broken <code class="docutils literal notranslate"><span class="pre">master</span></code> publishes a broken release. Wait
-for builds <em>and</em> integration tests, then tag.</p>
+<p>Never publish the release before the GitLab integration tests pass.
+Merging to <code class="docutils literal notranslate"><span class="pre">master</span></code> starts the GitLab pipeline automatically via the
+mirror, but publishing the release creates the tag, which triggers the
+PyPI publish, which cannot be undone cleanly — publishing a broken
+<code class="docutils literal notranslate"><span class="pre">master</span></code> publishes a broken release. Wait for builds <em>and</em>
+integration tests, then publish.</p>
 </div>
+</section>
+<section id="container-deployment">
+<h3>Container deployment<a class="headerlink" href="#container-deployment" title="Link to this heading">¶</a></h3>
+<p>Publishing the <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> tag also builds the container images and deploys
+the all-in-one oinit appliance to the CD host
+(<code class="docutils literal notranslate"><span class="pre">ssh-oidc-cicd.vm.fedcloud.eu</span></code>). The deploy job runs only after all image
+targets succeed and pins <code class="docutils literal notranslate"><span class="pre">MC_TAG</span></code> in the host’s <code class="docutils literal notranslate"><span class="pre">docker/.env</span></code>; pushes to
+<code class="docutils literal notranslate"><span class="pre">prerel</span></code> only publish the moving <code class="docutils literal notranslate"><span class="pre">prerel</span></code> images. The host checkout is
+the webssh-oidc release tag, so release and deploy webssh-oidc first when a
+release changes the Compose manifest.</p>
 </section>
 </section>
 <section id="documentation-versions">

@@ -6,6 +6,7 @@
   :maxdepth: 2
 
   installation
+  docker
   configuration
   running
   usage

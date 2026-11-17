@@ -73,6 +73,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docker.html">Running motley_cue in containers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../running.html">Running</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../running.html#development">Development</a></li>
@@ -206,9 +207,9 @@
 <span class="c1">## this is the only key without a default value, must be specified for each section</span>
 <span class="c1"># op_url =</span>
 
-<span class="c1">## scopes required from the OP to access the service -- default: ["openid", "profile", "email", "eduperson_entitlement"]</span>
+<span class="c1">## scopes required from the OP to access the service -- default: ["openid", "profile", "email", "entitlements"]</span>
 <span class="c1">## sane defaults for each OP are provided in the examples below</span>
-<span class="na">scopes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">["openid", "profile", "email", "eduperson_entitlement"]</span>
+<span class="na">scopes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">["openid", "profile", "email", "entitlements"]</span>
 
 <span class="c1">## USER AUTHORISATION</span>
 <span class="c1">## authorise all users from trusted OP, defaults to False if not specified</span>
@@ -218,8 +219,9 @@
 <span class="na">authorised_vos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[]</span>
 
 <span class="c1">## the OIDC claim containing the VOs specified above</span>
-<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eduperson_entitlement</span>
-<span class="c1"># vo_claim = entitlements</span>
+<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">entitlements</span>
+<span class="c1"># OPs that still use the legacy claim name can override this per OP:</span>
+<span class="c1"># vo_claim = eduperson_entitlement</span>
 
 <span class="c1">## how many VOs need to be matched from the list, valid options: all, one, or an int</span>
 <span class="c1">## defaults to one if not specified</span>
@@ -343,6 +345,24 @@
 <span class="c1"># assurance_based_shell_max_tier = limited</span>
 
 
+<span class="c1">##################################################################################</span>
+<span class="c1">## LOCAL GROUP CLAIM SOURCES</span>
+<span class="c1">##</span>
+<span class="c1">## group_claims -- token claims whose values are unioned into the user's local</span>
+<span class="c1">## group membership by feudalAdapter. Values that parse as AARC-G002</span>
+<span class="c1">## entitlements are mapped to group names using the configured groups.method;</span>
+<span class="c1">## all other values are used verbatim as group names. The result is filtered</span>
+<span class="c1">## according to groups.policy, masked for the backend, and deduplicated.</span>
+<span class="c1">##</span>
+<span class="c1">## This option follows the same [DEFAULT] inheritance as the rest of this</span>
+<span class="c1">## section: set it once globally and override it per OP. A per-OP list is the</span>
+<span class="c1">## complete set of sources for that OP -- claims not listed are ignored, and</span>
+<span class="c1">## there is no implicit fallback. Set it to [] to disable claim-derived groups.</span>
+<span class="c1">##</span>
+<span class="c1">## default: [entitlements, wlcg.groups]</span>
+<span class="c1"># group_claims = [entitlements, wlcg.groups]</span>
+
+
 
 <span class="c1">#########################################################################################</span>
 <span class="c1">## AUTHORISATION PER OIDC PROVIDER</span>
@@ -404,7 +424,7 @@
 
 <span class="k">[authorisation.google]</span>
 <span class="na">op_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://accounts.google.com/</span>
-<span class="c1">## google does not support the eduperson_entitlement scope</span>
+<span class="c1">## google does not support the entitlements scope</span>
 <span class="na">scopes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">["openid", "profile", "email"]</span>
 <span class="c1">## This OP asserts no REFEDS assurance at all, so its users would be classified</span>
 <span class="c1">## by whatever [DEFAULT] says. If you have enabled assurance-based shell tiers,</span>
@@ -424,10 +444,16 @@
 <span class="k">[authorisation.myaccessid]</span>
 <span class="na">op_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://proxy.myaccessid.org</span>
 <span class="na">scopes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">["openid", "profile", "email", "eduperson_entitlement", "eduperson_assurance"]</span>
+<span class="c1">## myaccessid still asserts the legacy claim name</span>
+<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eduperson_entitlement</span>
+<span class="na">group_claims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[eduperson_entitlement]</span>
 
 <span class="k">[authorisation.nfdiinfraproxy]</span>
 <span class="na">op_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://infraproxy.nfdi-aai.dfn.de</span>
 <span class="na">scopes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">["openid", "profile", "email", "eduperson_assurance", "eduperson_entitlement", "voperson_external_affiliation", "voperson_id"]</span>
+<span class="c1">## nfdiinfraproxy still asserts the legacy claim name</span>
+<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eduperson_entitlement</span>
+<span class="na">group_claims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[eduperson_entitlement]</span>
 
 <span class="k">[authorisation.academicid]</span>
 <span class="na">op_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://keycloak.sso.gwdg.de/auth/realms/academiccloud</span>

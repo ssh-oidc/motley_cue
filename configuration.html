@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Running" href="running.html" />
-    <link rel="prev" title="Installation" href="installation.html" />
+    <link rel="prev" title="Running motley_cue in containers" href="docker.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -73,6 +73,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docker.html">Running motley_cue in containers</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-templates">Configuration templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#config-files-search-paths">Config files search paths</a></li>
@@ -99,7 +100,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Previous: <a href="docker.html" title="previous chapter">Running motley_cue in containers</a></li>
       <li>Next: <a href="running.html" title="next chapter">Running</a></li>
   </ul></li>
 </ul>
@@ -194,10 +195,13 @@
 <span class="na">authorised_vos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[]</span>
 
 <span class="c1">## the OIDC claim containing the VOs specified above</span>
-<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eduperson_entitlement</span>
+<span class="na">vo_claim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">entitlements</span>
 
 <span class="c1">## how many VOs need to be matched from the list, valid options: all, one, or an int</span>
 <span class="na">vo_match</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">one</span>
+
+<span class="c1">## token claims whose values become local group membership</span>
+<span class="na">group_claims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[entitlements, wlcg.groups]</span>
 
 <span class="c1">## list of individual users authorised to use the service</span>
 <span class="c1">## specified through OIDC 'sub', relative to the section's OP ('iss')</span>
@@ -229,6 +233,7 @@
 <li><p>A VO must be specified as a string or an entitlement according to the AARC guideline <a class="reference external" href="https://aarc-community.org/guidelines/aarc-g002">AARC-G002</a> (or <a class="reference external" href="https://aarc-community.org/guidelines/aarc-g069">AARC-G069</a>, once it is published)</p></li>
 <li><p>An individual user must be specified by its unique identifier at the OP (the <code class="docutils literal notranslate"><span class="pre">sub</span></code> claim)</p></li>
 </ul>
+<p>Local group membership is derived from the claims listed in <code class="docutils literal notranslate"><span class="pre">group_claims</span></code>. AARC-G002 entitlement values are mapped to group names, while all other values are used verbatim; the result is filtered by the <code class="docutils literal notranslate"><span class="pre">[groups]</span></code> policy and passed to the feudal adapter. The option inherits from <code class="docutils literal notranslate"><span class="pre">[DEFAULT]</span></code> and can be overridden per OP; a per-OP list replaces the default list rather than adding to it, and an empty list disables claim-derived groups.</p>
 <p>Furthermore, you can also configure an <strong>audience</strong> for the service in order to restrict access to tokens that have been released for this specific audience (i.e., they contain the configured audience in the <code class="docutils literal notranslate"><span class="pre">aud</span></code> claim). The audience can be configured individually per-OP.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -390,7 +395,7 @@
     <ul>
         <li>
           &larr;
-          <a href="installation.html" title="Previous document">Installation</a>
+          <a href="docker.html" title="Previous document">Running motley_cue in containers</a>
         </li>
         <li>
           <a href="running.html" title="Next document">Running</a>

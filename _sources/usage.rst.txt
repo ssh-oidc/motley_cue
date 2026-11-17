@@ -17,7 +17,7 @@ Once you have ``oidc-agent`` running, configure an account for your preferred OP
 
 .. code-block:: bash
 
-  oidc-gen --pub --iss https://aai.egi.eu/oidc --scope "openid profile email offline_access eduperson_entitlement eduperson_scoped_affiliation eduperson_unique_id" egi
+  oidc-gen --pub --iss https://aai.egi.eu/oidc --scope "openid profile email offline_access entitlements eduperson_scoped_affiliation eduperson_unique_id" egi
 
 Then you can retrieve an access token with:
 
