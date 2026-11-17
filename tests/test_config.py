@@ -225,7 +225,7 @@ SWALLOWED_QUIETLY = """
 [mapper]
 [authorisation.egi]
 op_url = https://aai.egi.com/oidc
-vo_claim = eduperson_entitlement
+vo_claim = entitlements
 
   assurance_based_shell_tier_full = profile/mfa
   assurance_based_shell_tier_restricted = *
@@ -280,3 +280,64 @@ def test_ordinary_multiline_values_are_not_flagged(test_config, caplog):
     with caplog.at_level(logging.WARNING):
         test_config.Config(config_parser)
     assert "swallowed" not in "\n".join(rec.getMessage() for rec in caplog.records)
+
+
+### group claim sources for feudalAdapter
+
+DEFAULT_VO_CLAIM = "entitlements"
+DEFAULT_GROUP_CLAIMS = [
+    "entitlements",
+    "wlcg.groups",
+]
+
+
+def test_vo_claim_default(test_config):
+    assert test_config.ConfigOPAuthZ().vo_claim == DEFAULT_VO_CLAIM
+
+
+def test_group_claims_default(test_config):
+    assert test_config.ConfigOPAuthZ().group_claims == DEFAULT_GROUP_CLAIMS
+
+
+def test_group_claims_default_section_and_per_op_override(test_config):
+    from configparser import ConfigParser
+    from types import SimpleNamespace
+
+    config_parser = ConfigParser()
+    config_parser.read_dict(
+        {
+            "DEFAULT": {"group_claims": "[groups]"},
+            "authorisation.op1": {"op_url": "https://one.example.org/oidc"},
+            "authorisation.op2": {
+                "op_url": "https://two.example.org/oidc",
+                "group_claims": "[entitlements]",
+            },
+        }
+    )
+    authorisation = test_config.Config(config_parser).authorisation
+
+    def claims_for(iss):
+        return authorisation.get_group_claims(SimpleNamespace(issuer=iss))
+
+    assert claims_for("https://one.example.org/oidc") == ["groups"]
+    assert claims_for("https://two.example.org/oidc") == ["entitlements"]
+    assert claims_for("https://unknown.example.org/oidc") == ["groups"]
+
+
+def test_group_claims_accepts_empty_list(test_config):
+    from configparser import ConfigParser
+    from types import SimpleNamespace
+
+    config_parser = ConfigParser()
+    config_parser.read_dict(
+        {
+            "authorisation.op": {
+                "op_url": "https://one.example.org/oidc",
+                "group_claims": "[]",
+            },
+        }
+    )
+    authorisation = test_config.Config(config_parser).authorisation
+    assert authorisation.get_group_claims(
+        SimpleNamespace(issuer="https://one.example.org/oidc")
+    ) == []

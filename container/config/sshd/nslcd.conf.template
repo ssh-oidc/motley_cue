@@ -1,0 +1,11 @@
+# nslcd configuration for the motley_cue SSH-host image.
+# This file is copied to /etc/nslcd.conf on first start if that file is absent.
+uid nslcd
+gid nslcd
+uri ldap://ldap:389
+base dc=example,dc=org
+
+# For a directory that does not allow anonymous reads, mount a real
+# /etc/nslcd.conf with the bind credentials instead of using this template.
+# binddn cn=admin,dc=example,dc=org
+# bindpw change-me

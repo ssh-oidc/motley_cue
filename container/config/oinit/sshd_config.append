@@ -1,0 +1,13 @@
+
+# motley_cue appliance: oinit certificate login.
+HostKey /state/ssh/ssh_host_ed25519_key
+HostCertificate /state/ssh/oinit/host-key-cert.pub
+TrustedUserCAKeys /state/ssh/oinit/user-ca.pub
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+UsePAM yes
+AuthenticationMethods publickey
+PermitRootLogin no
+PermitEmptyPasswords no
